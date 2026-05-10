@@ -56,7 +56,7 @@ class BotPopulationService : Service() {
 	private val spawnedWorldObjects = ConcurrentHashMap<String, Long>()
 
 	override fun start(): Boolean {
-		BotServiceHub.initRepository()
+		BotServiceHub.testRepositoryOverride?.also { BotServiceHub.repository = it } ?: BotServiceHub.initRepository()
 		BotServiceHub.populationService = this
 		// Set up default zone caps (can be overridden per zone)
 		zoneActiveCaps["tatooine"] = 10

@@ -59,6 +59,12 @@ object BotServiceHub {
 	}
 
 
+	/**
+	 * Set before [BotPopulationService.start] in tests to bypass [initRepository].
+	 * Tests should null this out in cleanup.
+	 */
+	@Volatile var testRepositoryOverride: BotRepository? = null
+
 	@Volatile var populationService: BotPopulationService? = null
 		internal set
 	@Volatile var dialogueService: BotDialogueService? = null
@@ -66,5 +72,7 @@ object BotServiceHub {
 	@Volatile var companionService: BotCompanionService? = null
 		internal set
 	@Volatile var telemetryService: BotTelemetryService? = null
+		internal set
+	@Volatile var worldSpawnService: BotWorldSpawnService? = null
 		internal set
 }

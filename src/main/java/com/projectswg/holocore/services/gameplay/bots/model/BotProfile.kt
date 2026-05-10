@@ -9,4 +9,5 @@ data class BotProfile(
 	val homePlanet: String,
 	val personalityTags: List<String> = emptyList(),
 	val speechStyle: String = "neutral",
+	val npcId: String = "",
 )

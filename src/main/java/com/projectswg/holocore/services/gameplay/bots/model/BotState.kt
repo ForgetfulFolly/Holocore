@@ -7,4 +7,8 @@ data class BotState(
 	var planet: String,
 	var groupId: Long = 0,
 	var mood: String = "neutral",
+	var x: Double = 0.0,
+	var y: Double = 0.0,
+	var z: Double = 0.0,
+	var heading: Float = 0f,
 )

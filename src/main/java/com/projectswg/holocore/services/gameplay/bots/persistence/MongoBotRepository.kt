@@ -181,6 +181,7 @@ class MongoBotRepository(database: MongoDatabase) : BotRepository {
 		.append("homePlanet",      p.homePlanet)
 		.append("personalityTags", p.personalityTags)
 		.append("speechStyle",     p.speechStyle)
+		.append("npcId",           p.npcId)
 
 	private fun docToProfile(d: Document): BotProfile = BotProfile(
 		botId           = d.getString("botId"),
@@ -191,6 +192,7 @@ class MongoBotRepository(database: MongoDatabase) : BotRepository {
 		homePlanet      = d.getString("homePlanet"),
 		personalityTags = stringList(d, "personalityTags"),
 		speechStyle     = d.getString("speechStyle") ?: "neutral",
+		npcId           = d.getString("npcId")        ?: "",
 	)
 
 	private fun stateToDoc(s: BotState): Document = Document()
@@ -200,6 +202,10 @@ class MongoBotRepository(database: MongoDatabase) : BotRepository {
 		.append("planet",   s.planet)
 		.append("groupId",  s.groupId)
 		.append("mood",     s.mood)
+		.append("x",        s.x)
+		.append("y",        s.y)
+		.append("z",        s.z)
+		.append("heading",  s.heading.toDouble())
 
 	private fun docToState(d: Document): BotState = BotState(
 		botId    = d.getString("botId"),
@@ -211,6 +217,10 @@ class MongoBotRepository(database: MongoDatabase) : BotRepository {
 		planet   = d.getString("planet")   ?: "",
 		groupId  = d.getLong("groupId")    ?: 0L,
 		mood     = d.getString("mood")     ?: "neutral",
+		x        = d.getDouble("x")        ?: 0.0,
+		y        = d.getDouble("y")        ?: 0.0,
+		z        = d.getDouble("z")        ?: 0.0,
+		heading  = (d.getDouble("heading") ?: 0.0).toFloat(),
 	)
 
 	private fun memoryToDoc(m: BotMemory): Document {
