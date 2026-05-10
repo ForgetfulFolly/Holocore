@@ -1,74 +1,31 @@
-# Task 407 -- PD7-G: Wire companion recruit command (currently stub)
+# PD7-G: Wire companion recruit command (currently a stub)
+## Worker-Role: code
+## Desk: 3
+## Scope: src/main/java/com/projectswg/holocore/services/support/global/admin/AdminBotService.kt (EDIT ALLOWED)
 
-Scope: /data/serverdata/Holocore/src/main/java/com/projectswg/holocore/services/support/global/admin/AdminBotService.kt
-Worker-Role: code
-Repo: /data/serverdata/Holocore (git pull + commit + push)
+## Description
+The "recruit" branch of handleCompanion() is a placeholder that never calls
+botCompanionService.recruitCompanion(). Phase D shipped BotCompanionService. Replace the
+placeholder stub with a real implementation mirroring the already-working "release" branch.
 
-VERIFY:
-  /qatool companion:recruit:bot_001
-  Expected: "[BOT] Companion bot_001 recruited." (not the Phase D placeholder message)
+## File Changes
+| Action | Path | Description |
+|--------|------|-------------|
+| MODIFY | src/main/java/com/projectswg/holocore/services/support/global/admin/AdminBotService.kt | Replace placeholder recruit branch in handleCompanion() with real botCompanionService.recruitCompanion() call |
 
----
+## Context files
+- src/main/java/com/projectswg/holocore/services/support/global/admin/AdminBotService.kt
 
-## CONTEXT
+## Embedded context
 
-File: AdminBotService.kt
+Current "recruit" branch (the ONLY thing to change):
 
-Current handleCompanion() method (exact code):
-
-    private fun handleCompanion(admin: CreatureObject, args: List<String>): Boolean {
-        val subcommand = args.getOrElse(0) { "recruit" }
-
-        when (subcommand) {
-            "recruit" -> {
-                sendMessage(admin, "[BOT] Companion wiring requires world-object support (Phase D). Usage: /companion recruit <bot_id>")
-            }
-            "release" -> {
-                val botIdArg = args.getOrNull(1)
-                if (botIdArg == null) {
-                    sendMessage(admin, "[BOT] Usage: /companion release <bot_id>")
-                } else {
-                    val player = admin.owner
-                    if (player == null) {
-                        sendMessage(admin, "[BOT] Cannot release companion: no active player session.")
-                    } else {
-                        val released = botCompanionService.releaseCompanion(player, botIdArg)
-                        if (released) sendMessage(admin, "[BOT] Companion $botIdArg released.")
-                        else sendMessage(admin, "[BOT] No companion $botIdArg is assigned to you.")
-                    }
-                }
-            }
-            else -> {
-                sendMessage(admin, "[BOT] Usage: /companion {recruit|release} <bot_id>")
-                return false
-            }
-        }
-        return true
-    }
-
-BotCompanionService (available via botCompanionService field) exposes:
-    fun recruitCompanion(player: Player, botId: String): Boolean
-    fun releaseCompanion(player: Player, botId: String): Boolean
-    fun isCompanionAssigned(botId: String): Boolean
-
----
-
-## SPEC
-
-### Problem
-The "recruit" branch of handleCompanion is a placeholder that never calls
-botCompanionService.recruitCompanion(). The release branch already works correctly.
-Phase D has shipped; the placeholder message is stale and misleading.
-
-### Required fix
-Replace the entire "recruit" branch:
-
-BEFORE:
     "recruit" -> {
         sendMessage(admin, "[BOT] Companion wiring requires world-object support (Phase D). Usage: /companion recruit <bot_id>")
     }
 
-AFTER:
+Replace it with this implementation (mirrors the "release" branch structure):
+
     "recruit" -> {
         val botIdArg = args.getOrNull(1)
         if (botIdArg == null) {
@@ -85,18 +42,24 @@ AFTER:
         }
     }
 
-No other changes to the file.
+The "release" branch is already correct — do NOT touch it.
+botCompanionService field is already available in the class.
 
-### Commit message
-    Fix PD7-G: wire companion recruit command -- was placeholder, now calls recruitCompanion()
+## Constraints
+- Change ONLY the "recruit" branch of the when block inside handleCompanion()
+- Do NOT touch the "release" branch, "else" branch, or any other method
+- No new imports needed — botCompanionService is already a field
 
-### Acceptance criteria
-1. /qatool companion:recruit:bot_001 -> "[BOT] Companion bot_001 recruited."
-2. /qatool companion:recruit:bot_001 (again, already owned) -> "[BOT] bot_001 already has an owner."
-3. /qatool companion:release:bot_001 -> "[BOT] Companion bot_001 released."
-4. ./gradlew test -- BUILD SUCCESSFUL
-5. git diff main..HEAD --name-only shows AdminBotService.kt
+## Acceptance
+- [ ] "recruit" branch calls botCompanionService.recruitCompanion(player, botIdArg)
+- [ ] Null checks for botIdArg and player are present
+- [ ] "release" branch is unchanged
+- [ ] git diff main..HEAD --name-only shows only AdminBotService.kt
 
-Team: bravo
+## Commit message
+Fix PD7-G: wire companion recruit command -- was placeholder, now calls recruitCompanion()
 
-Status: implement-in-progress
+Team: alpha
+Worker-Role: team-alpha-code
+Retry-Count: 0
+Status: queued
