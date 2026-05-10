@@ -1,13 +1,38 @@
+/***********************************************************************************
+ * Copyright (c) 2024 /// Project SWG /// www.projectswg.com                       *
+ *                                                                                 *
+ * ProjectSWG is the first NGE emulator for Star Wars Galaxies founded on          *
+ * July 7th, 2011 after SOE announced the official shutdown of Star Wars Galaxies. *
+ * Our goal is to create an emulator which will provide a server for players to    *
+ * continue playing a game similar to the one they used to play. We are basing     *
+ * it on the final publish of the game prior to end-game events.                   *
+ *                                                                                 *
+ * This file is part of Holocore.                                                  *
+ *                                                                                 *
+ * --------------------------------------------------------------------------------*
+ *                                                                                 *
+ * Holocore is free software: you can redistribute it and/or modify                *
+ * it under the terms of the GNU Affero General Public License as                  *
+ * published by the Free Software Foundation, either version 3 of the              *
+ * License, or (at your option) any later version.                                 *
+ *                                                                                 *
+ * Holocore is distributed in the hope that it will be useful,                     *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of                  *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                   *
+ * GNU Affero General Public License for more details.                             *
+ *                                                                                 *
+ * You should have received a copy of the GNU Affero General Public License        *
+ * along with Holocore.  If not, see <http://www.gnu.org/licenses/>.               *
+ ***********************************************************************************/
 package com.projectswg.holocore.services.gameplay.bots
 
 import com.projectswg.holocore.intents.support.global.chat.SystemMessageIntent
 import com.projectswg.holocore.resources.support.global.player.Player
 import com.projectswg.holocore.services.gameplay.bots.model.BotMemory
-import com.projectswg.holocore.services.gameplay.bots.persistence.InMemoryBotRepository
 import me.joshlarson.jlcommon.control.Service
 import me.joshlarson.jlcommon.log.Log
 import java.time.Instant
-import java.util.Locale
+import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -15,13 +40,7 @@ import java.util.concurrent.ConcurrentHashMap
  */
 class BotDialogueService : Service() {
 
-	companion object {
-		@Volatile
-		var instance: BotDialogueService? = null
-			private set
-	}
-
-	private val repository = InMemoryBotRepository()
+	private val repository get() = BotServiceHub.repository
 	private val playerMemories = ConcurrentHashMap<String, BotMemory>() // Key: "${botId}_${playerId}"
 	
 	// Rate limiting: track last tell time per player-bot pair
@@ -29,19 +48,17 @@ class BotDialogueService : Service() {
 	private val tellRateLimitSeconds = 5 // Allow 1 tell per 5 seconds per pair
 	
 	// Telemetry
-	private val tellsHandled = object : ThreadLocal<Long>() {
-		override fun initialValue() = 0L
-	}
+	private val tellsHandled = AtomicLong(0)
 
 	override fun start(): Boolean {
-		instance = this
+		BotServiceHub.dialogueService = this
 		Log.i("BotDialogueService started with rate limit: %d seconds", tellRateLimitSeconds)
 		return true
 	}
 
 	override fun stop(): Boolean {
-		if (instance === this) {
-			instance = null
+		if (BotServiceHub.dialogueService === this) {
+			BotServiceHub.dialogueService = null
 		}
 		// Save all memories back to persistence
 		playerMemories.values.forEach { memory ->
@@ -88,7 +105,8 @@ class BotDialogueService : Service() {
 
 		// Send response (placeholder until instant-message system is available)
 		SystemMessageIntent.broadcastPersonal(sender, response)
-		tellsHandled.set(tellsHandled.get() + 1)
+		tellsHandled.incrementAndGet()
+		BotServiceHub.telemetryService?.onTellHandled()
 		
 		return true
 	}

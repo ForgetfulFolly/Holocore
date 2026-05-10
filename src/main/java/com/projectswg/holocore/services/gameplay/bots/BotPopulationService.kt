@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 class BotPopulationService : Service() {
 
-	private val repository: BotRepository = BotServiceHub.repository
+	private val repository get() = BotServiceHub.repository
 	private val profiles = ConcurrentHashMap<String, BotProfile>()
 	private val states = ConcurrentHashMap<String, BotState>()
 	
@@ -56,6 +56,7 @@ class BotPopulationService : Service() {
 	private val spawnedWorldObjects = ConcurrentHashMap<String, Long>()
 
 	override fun start(): Boolean {
+		BotServiceHub.initRepository()
 		BotServiceHub.populationService = this
 		// Set up default zone caps (can be overridden per zone)
 		zoneActiveCaps["tatooine"] = 10

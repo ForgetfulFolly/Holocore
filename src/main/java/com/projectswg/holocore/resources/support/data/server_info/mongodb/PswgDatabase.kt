@@ -28,6 +28,7 @@ package com.projectswg.holocore.resources.support.data.server_info.mongodb
 import com.mongodb.client.MongoClient
 import com.mongodb.client.MongoClients
 import com.mongodb.client.MongoCollection
+import com.mongodb.client.MongoDatabase
 import com.projectswg.holocore.resources.support.data.server_info.database.*
 import com.projectswg.holocore.resources.support.data.server_info.mariadb.PswgUserDatabaseMaria
 import me.joshlarson.jlcommon.log.Log
@@ -40,6 +41,7 @@ import java.util.logging.Logger
 object PswgDatabase {
 	
 	private var mongoClient: MongoClient? = null
+	private var mongoDatabaseRef: MongoDatabase? = null
 	private var configImpl = PswgConfigDatabase.createDefault()
 	private var usersImpl = PswgUserDatabase.createDefault()
 	private var objectsImpl = PswgObjectDatabase.createDefault()
@@ -77,6 +79,7 @@ object PswgDatabase {
 		val bazaarAvailableItems = initTable(databaseConfig.bazaarAvailableItems, defaultCreator = {PswgBazaarAvailableItemsDatabase.createDefault()}, mongoInitializer = ::PswgBazaarAvailableItemsDatabaseMongo)
 		val chatRooms = initTable(databaseConfig.chatRooms, defaultCreator = {PswgChatRoomDatabase.createDefault()}, mongoInitializer = ::PswgChatRoomDatabaseMongo)
 		
+		this.mongoDatabaseRef = database
 		this.mongoClient = client
 		this.configImpl = config
 		this.usersImpl = users
@@ -89,7 +92,11 @@ object PswgDatabase {
 	
 	fun close() {
 		mongoClient?.close()
+		mongoDatabaseRef = null
 	}
+
+	/** Returns the live MongoDB database, or null if not yet initialized. */
+	fun mongoDatabase(): MongoDatabase? = mongoDatabaseRef
 	
 	private fun <T> initTable(table: DatabaseTable, defaultCreator: () -> T, mariaInitializer: (DatabaseTable) -> T = {defaultCreator()}, mongoInitializer: (MongoCollection<Document>) -> T = {defaultCreator()}): T {
 		if (table.isMariaDefined())
