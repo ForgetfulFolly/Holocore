@@ -62,4 +62,4 @@ Fix PD7-G: wire companion recruit command -- was placeholder, now calls recruitC
 Team: alpha
 Worker-Role: team-alpha-code
 Retry-Count: 0
-Status: implement-in-progress
+Status: queued
