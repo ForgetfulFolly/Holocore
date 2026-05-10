@@ -36,4 +36,8 @@ data class BotProfile(
 	val personalityTags: List<String> = emptyList(),
 	val speechStyle: String = "neutral",
 	val npcId: String = "",
+	val level: Int = 1,
+	val behavior: String = "LOITER",
+	val difficulty: String = "NORMAL",
+	val invulnerable: Boolean = true,
 )

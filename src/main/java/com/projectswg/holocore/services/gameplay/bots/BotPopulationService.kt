@@ -51,9 +51,6 @@ class BotPopulationService : Service() {
 	
 	// Per-zone caps for active simulation (Phase 1: 10 active bots per zone)
 	private val zoneActiveCaps = ConcurrentHashMap<String, Int>()
-	
-	// Track spawned world objects (botId -> worldObjectId)
-	private val spawnedWorldObjects = ConcurrentHashMap<String, Long>()
 
 	override fun start(): Boolean {
 		BotServiceHub.testRepositoryOverride?.also { BotServiceHub.repository = it } ?: BotServiceHub.initRepository()
@@ -98,7 +95,6 @@ class BotPopulationService : Service() {
 		}
 		profiles.clear()
 		states.clear()
-		spawnedWorldObjects.clear()
 		return super.stop()
 	}
 
@@ -121,6 +117,19 @@ class BotPopulationService : Service() {
 
 	fun setTier(botId: String, tier: BotSimulationTier): Boolean {
 		val state = states[botId] ?: return false
+
+		// Route through spawn pipeline when crossing the LOCAL/COMPANION boundary
+		val wasActive = state.tier == BotSimulationTier.LOCAL || state.tier == BotSimulationTier.COMPANION
+		val willBeActive = tier == BotSimulationTier.LOCAL || tier == BotSimulationTier.COMPANION
+
+		if (willBeActive && !wasActive) {
+			return promoteToLocal(botId, state.planet, state.x, state.y, state.z, state.heading)
+		}
+		if (!willBeActive && wasActive) {
+			return demoteToBackground(botId)
+		}
+
+		// Same tier or non-LOCAL tier change — update directly
 		state.tier = tier
 		repository.saveBotState(state)
 		return true
@@ -128,9 +137,10 @@ class BotPopulationService : Service() {
 
 	/**
 	 * Promote a bot from DIRECTORY to LOCAL tier (spawn as world object).
-	 * Respects per-zone active caps.
+	 * Respects per-zone active caps. The caller must supply the spawn position;
+	 * if [x]/[y]/[z] are all zero the bot spawns at world origin (valid only in tests).
 	 */
-	fun promoteToLocal(botId: String, zoneName: String): Boolean {
+	fun promoteToLocal(botId: String, zoneName: String, x: Double = 0.0, y: Double = 0.0, z: Double = 0.0, heading: Double = 0.0): Boolean {
 		val profile = profiles[botId] ?: return false
 		val state = states[botId] ?: return false
 		
@@ -148,14 +158,29 @@ class BotPopulationService : Service() {
 			return false
 		}
 
-		// Promote the bot
+		// Promote the bot and record spawn position
 		state.tier = BotSimulationTier.LOCAL
-		state.planet = zoneName // Update current zone
+		state.planet = zoneName
+		state.x = x
+		state.y = y
+		state.z = z
+		state.heading = heading
+		state.hasLocation = true
 		activeCount.incrementAndGet()
 		repository.saveBotState(state)
 		BotServiceHub.telemetryService?.onPromotion()
-		BotServiceHub.worldSpawnService?.spawnBotObject(profile, state)
-		
+
+		// Attempt world spawn — roll back if spawn service exists but rejects the spawn
+		val spawnService = BotServiceHub.worldSpawnService
+		if (spawnService != null && spawnService.spawnBotObject(profile, state) == null) {
+			state.tier = BotSimulationTier.DIRECTORY
+			activeCount.decrementAndGet()
+			BotServiceHub.telemetryService?.onDemotion()
+			repository.saveBotState(state)
+			Log.w("Bot %s promotion rolled back — spawnBotObject returned null", botId)
+			return false
+		}
+
 		Log.d("Bot %s promoted to LOCAL in zone %s (%d/%d active)", 
 			botId, zoneName, activeCount.get(), activeCap)
 		return true
@@ -180,7 +205,6 @@ class BotPopulationService : Service() {
 
 		// Despawn world object
 		BotServiceHub.worldSpawnService?.despawnBotObject(botId)
-		spawnedWorldObjects.remove(botId)
 
 		// Demote the bot
 		state.tier = BotSimulationTier.DIRECTORY
@@ -192,16 +216,10 @@ class BotPopulationService : Service() {
 	}
 
 	/**
-	 * Track a spawned world object for a bot.
+	 * Get the world object ID for a spawned bot.
+	 * Delegates to [BotWorldSpawnService] — single source of truth.
 	 */
-	fun trackWorldObject(botId: String, worldObjectId: Long) {
-		spawnedWorldObjects[botId] = worldObjectId
-	}
-
-	/**
-	 * Get the world object ID if this bot is spawned.
-	 */
-	fun getWorldObject(botId: String): Long? = spawnedWorldObjects[botId]
+	fun getWorldObject(botId: String): Long? = BotServiceHub.worldSpawnService?.getSpawnedObjectId(botId)
 
 	/**
 	 * Get all bots in a particular zone at a given tier.
@@ -237,19 +255,29 @@ class BotPopulationService : Service() {
 	}
 
 	/**
-	 * Get all spawned world object IDs.
-	 */
-	fun getAllSpawnedWorldObjects(): Map<String, Long> = spawnedWorldObjects.toMap()
-
-	/**
 	 * Initialize 50 seed bots for Phase 1 testing (Tatooine, Mos Eisley).
 	 */
 	private fun initializePhase1SeedBots() {
 		val seedBots = BotSeedData.generatePhase1Bots(50, "tatooine")
+		val random = java.util.Random(42)
 		seedBots.forEach { profile ->
 			registerProfile(profile, BotSimulationTier.DIRECTORY)
+			// Scatter bots in a 200m radius around the Mos Eisley central square
+			val state = states[profile.botId] ?: return@forEach
+			state.x = MOS_EISLEY_X + (random.nextDouble() - 0.5) * 200.0
+			state.y = MOS_EISLEY_Y
+			state.z = MOS_EISLEY_Z + (random.nextDouble() - 0.5) * 200.0
+			state.hasLocation = true
+			repository.saveBotState(state)
 		}
 		Log.i("Initialized %d Phase 1 seed bots", seedBots.size)
+	}
+
+	companion object {
+		/** Mos Eisley central square (Tatooine) approximate world coordinates. */
+		private const val MOS_EISLEY_X = -3698.0
+		private const val MOS_EISLEY_Y = 5.0
+		private const val MOS_EISLEY_Z = 4677.0
 	}
 
 	/**
@@ -265,7 +293,7 @@ class BotPopulationService : Service() {
 			totalBots = profiles.size,
 			totalByTier = totalByTier,
 			totalByZone = totalByZone,
-			totalSpawned = spawnedWorldObjects.size,
+			totalSpawned = BotServiceHub.worldSpawnService?.getSpawnedCount() ?: 0,
 		)
 	}
 }

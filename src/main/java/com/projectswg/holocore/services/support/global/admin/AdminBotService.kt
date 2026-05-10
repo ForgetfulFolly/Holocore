@@ -83,18 +83,30 @@ class AdminBotService : Service() {
 	}
 
 	/**
-	 * `/admin spawnbots <count> <zone>`
+	 * `/admin spawnbots <bot_id>` — promote a specific bot at the admin's current location.
+	 * `/admin spawnbots stats <zone>` — show population stats for a zone.
 	 */
 	private fun handleSpawnBots(admin: CreatureObject, args: List<String>): Boolean {
-		if (args.size < 2) return false
+		if (args.isEmpty()) return false
 
-		args[0].toIntOrNull() ?: return false
-		val zone = args[1]
+		if (args[0] == "stats") {
+			val zone = args.getOrElse(1) { "tatooine" }
+			val stats = botPopulationService.getStatistics()
+			sendMessage(admin, "[BOT] Zone: $zone — active: ${botPopulationService.getActiveCount(zone)} / ${botPopulationService.getActiveCap(zone)}")
+			sendMessage(admin, "[BOT] Total bots: ${stats.totalBots}, world objects: ${stats.totalSpawned}")
+			return true
+		}
 
-		sendMessage(admin, "[BOT] World-object spawning not yet implemented. Current zone stats:")
+		val botId = args[0]
+		val loc = admin.worldLocation
+		val planet = loc.terrain.name.lowercase(java.util.Locale.US)
+		val success = botPopulationService.promoteToLocal(botId, planet, loc.x, loc.y, loc.z, loc.yaw)
 
-		val stats = botPopulationService.getStatistics()
-		sendMessage(admin, "[BOT] Active bots: ${stats.totalSpawned} / ${botPopulationService.getActiveCap(zone)}")
+		if (success) {
+			sendMessage(admin, "[BOT] Bot $botId promoted to LOCAL at (${String.format("%.1f", loc.x)}, ${String.format("%.1f", loc.z)}) on $planet")
+		} else {
+			sendMessage(admin, "[BOT] Failed to promote bot $botId — check zone cap, npcId, and server log")
+		}
 		return true
 	}
 
@@ -167,9 +179,12 @@ class AdminBotService : Service() {
 	/**
 	 * `/admin kill bots`
 	 */
+	/**
+	 * `/admin kill bots`
+	 */
 	private fun handleKillBots(admin: CreatureObject): Boolean {
 		val stats = botPopulationService.getStatistics()
-		sendMessage(admin, "[BOT] World-object despawn not yet implemented. Current spawned count: ${stats.totalSpawned}")
+		sendMessage(admin, "[BOT] Current spawned world objects: ${stats.totalSpawned}")
 		return true
 	}
 
@@ -188,7 +203,7 @@ class AdminBotService : Service() {
 		val success = botPopulationService.setTier(botId, tier)
 
 		if (success) {
-			sendMessage(admin, "[BOT] Bot $botId promoted to tier $tierIndex ($tier)")
+			sendMessage(admin, "[BOT] Bot $botId tier set to $tier")
 		} else {
 			sendMessage(admin, "[BOT] Failed to set tier for bot $botId")
 		}

@@ -113,7 +113,7 @@ class BotWorldSpawnService : Service() {
 					state.x = loc.x
 					state.y = loc.y
 					state.z = loc.z
-					state.heading = loc.yaw.toFloat()
+					state.heading = loc.yaw
 				}
 			}
 			DestroyObjectIntent(spawned.aiObject).broadcast()
@@ -148,8 +148,12 @@ class BotWorldSpawnService : Service() {
 			.setX(state.x)
 			.setY(state.y)
 			.setZ(state.z)
-			.setHeading(state.heading.toDouble())
+			.setHeading(state.heading)
 			.build()
+
+		if (!state.hasLocation) {
+			Log.w("BotWorldSpawnService: bot '%s' has no recorded location — spawning at (%.1f, %.1f, %.1f); use promoteToLocal with explicit coords", profile.botId, state.x, state.y, state.z)
+		}
 
 		var createdEgg: SWGObject? = null
 		return try {
@@ -160,19 +164,18 @@ class BotWorldSpawnService : Service() {
 
 			val spawnInfo = SimpleSpawnInfo.builder()
 				.withNpcId(npcId)
-				.withDifficulty(CreatureDifficulty.NORMAL)
-				.withMinLevel(1)
-				.withMaxLevel(1)
-				.withSpawnerFlag(SpawnerFlag.INVULNERABLE)
-				.withBehavior(AIBehavior.LOITER)
+				.withDifficulty(try { CreatureDifficulty.valueOf(profile.difficulty) } catch (e: Exception) { CreatureDifficulty.NORMAL })
+				.withMinLevel(profile.level)
+				.withMaxLevel(profile.level)
+				.withSpawnerFlag(if (profile.invulnerable) SpawnerFlag.INVULNERABLE else SpawnerFlag.ATTACKABLE)
+				.withBehavior(try { AIBehavior.valueOf(profile.behavior) } catch (e: Exception) { AIBehavior.LOITER })
 				.withLocation(location)
 				.withAmount(1)
 				.build()
 
 			val aiObject = NPCCreator.createSingleNpc(Spawner(spawnInfo, egg))
 			spawnedBots[profile.botId] = SpawnedBot(egg, aiObject)
-			BotServiceHub.populationService?.trackWorldObject(profile.botId, aiObject.objectId)
-			Log.d("BotWorldSpawnService: spawned bot '%s' (%s) at %s", profile.botId, npcId, location)
+			Log.i("BotWorldSpawnService: spawned bot '%s' (%s) at %s", profile.botId, npcId, location)
 			aiObject
 		} catch (e: Exception) {
 			createdEgg?.let { DestroyObjectIntent(it).broadcast() }
@@ -190,6 +193,15 @@ class BotWorldSpawnService : Service() {
 		DestroyObjectIntent(spawned.egg).broadcast()
 		Log.d("BotWorldSpawnService: despawned bot '%s'", botId)
 	}
+
+	/** Number of bots currently tracked in the world. */
+	fun getSpawnedCount(): Int = spawnedBots.size
+
+	/**
+	 * Return the [AIObject.objectId] of a spawned bot, or null if not tracked.
+	 * Single source of truth — replaces the now-removed [BotPopulationService.spawnedWorldObjects].
+	 */
+	fun getSpawnedObjectId(botId: String): Long? = spawnedBots[botId]?.aiObject?.objectId
 
 	/** Map planet name (as stored in BotState) to a [Terrain] value. Uses the enum's own lookup table. */
 	private fun terrainForPlanet(planet: String): Terrain? = Terrain.getTerrainFromName(planet)

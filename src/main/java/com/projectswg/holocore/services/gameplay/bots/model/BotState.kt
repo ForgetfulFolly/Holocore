@@ -36,5 +36,6 @@ data class BotState(
 	var x: Double = 0.0,
 	var y: Double = 0.0,
 	var z: Double = 0.0,
-	var heading: Float = 0f,
+	var heading: Double = 0.0,
+	var hasLocation: Boolean = false,
 )

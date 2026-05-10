@@ -182,6 +182,10 @@ class MongoBotRepository(database: MongoDatabase) : BotRepository {
 		.append("personalityTags", p.personalityTags)
 		.append("speechStyle",     p.speechStyle)
 		.append("npcId",           p.npcId)
+		.append("level",           p.level)
+		.append("behavior",        p.behavior)
+		.append("difficulty",      p.difficulty)
+		.append("invulnerable",    p.invulnerable)
 
 	private fun docToProfile(d: Document): BotProfile = BotProfile(
 		botId           = d.getString("botId"),
@@ -193,34 +197,40 @@ class MongoBotRepository(database: MongoDatabase) : BotRepository {
 		personalityTags = stringList(d, "personalityTags"),
 		speechStyle     = d.getString("speechStyle") ?: "neutral",
 		npcId           = d.getString("npcId")        ?: "",
+		level           = d.getInteger("level")       ?: 1,
+		behavior        = d.getString("behavior")     ?: "LOITER",
+		difficulty      = d.getString("difficulty")   ?: "NORMAL",
+		invulnerable    = d.getBoolean("invulnerable") ?: true,
 	)
 
 	private fun stateToDoc(s: BotState): Document = Document()
-		.append("botId",    s.botId)
-		.append("tier",     s.tier.name)
-		.append("activity", s.activity)
-		.append("planet",   s.planet)
-		.append("groupId",  s.groupId)
-		.append("mood",     s.mood)
-		.append("x",        s.x)
-		.append("y",        s.y)
-		.append("z",        s.z)
-		.append("heading",  s.heading.toDouble())
+		.append("botId",       s.botId)
+		.append("tier",        s.tier.name)
+		.append("activity",    s.activity)
+		.append("planet",      s.planet)
+		.append("groupId",     s.groupId)
+		.append("mood",        s.mood)
+		.append("x",           s.x)
+		.append("y",           s.y)
+		.append("z",           s.z)
+		.append("heading",     s.heading)
+		.append("hasLocation", s.hasLocation)
 
 	private fun docToState(d: Document): BotState = BotState(
-		botId    = d.getString("botId"),
-		tier     = d.getString("tier")?.let { name ->
+		botId       = d.getString("botId"),
+		tier        = d.getString("tier")?.let { name ->
 			BotSimulationTier.entries.firstOrNull { it.name == name }
 				?: run { Log.w("MongoBotRepository: unknown tier '%s', defaulting to DIRECTORY", name); BotSimulationTier.DIRECTORY }
 		} ?: BotSimulationTier.DIRECTORY,
-		activity = d.getString("activity") ?: "idle",
-		planet   = d.getString("planet")   ?: "",
-		groupId  = d.getLong("groupId")    ?: 0L,
-		mood     = d.getString("mood")     ?: "neutral",
-		x        = d.getDouble("x")        ?: 0.0,
-		y        = d.getDouble("y")        ?: 0.0,
-		z        = d.getDouble("z")        ?: 0.0,
-		heading  = (d.getDouble("heading") ?: 0.0).toFloat(),
+		activity    = d.getString("activity")   ?: "idle",
+		planet      = d.getString("planet")     ?: "",
+		groupId     = d.getLong("groupId")      ?: 0L,
+		mood        = d.getString("mood")       ?: "neutral",
+		x           = d.getDouble("x")          ?: 0.0,
+		y           = d.getDouble("y")          ?: 0.0,
+		z           = d.getDouble("z")          ?: 0.0,
+		heading     = d.getDouble("heading")    ?: 0.0,
+		hasLocation = d.getBoolean("hasLocation") ?: false,
 	)
 
 	private fun memoryToDoc(m: BotMemory): Document {
