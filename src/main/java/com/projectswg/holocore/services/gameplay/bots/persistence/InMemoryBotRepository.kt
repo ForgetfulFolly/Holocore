@@ -70,15 +70,15 @@ class InMemoryBotRepository : BotRepository {
 		return memory.remove(key) != null
 	}
 
-	override fun saveBotProfiles(profiles: List<BotProfile>): Boolean {
-		profiles.forEach { profile ->
+	override fun saveBotProfiles(profileList: List<BotProfile>): Boolean {
+		profileList.forEach { profile ->
 			this.profiles[profile.botId] = profile
 		}
 		return true
 	}
 
-	override fun saveBotStates(states: List<BotState>): Boolean {
-		states.forEach { state ->
+	override fun saveBotStates(stateList: List<BotState>): Boolean {
+		stateList.forEach { state ->
 			this.states[state.botId] = state
 		}
 		return true

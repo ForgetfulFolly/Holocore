@@ -66,10 +66,18 @@ class BotPopulationService : Service() {
 		val loaded = repository.getAllBotProfiles()
 		val persistedStates = repository.getAllBotStates().associateBy { it.botId }
 		loaded.forEach { profile ->
-			registerProfile(profile, persist = false)
-			persistedStates[profile.botId]?.let { states[profile.botId] = it }
+			val saved = persistedStates[profile.botId]
+			registerProfile(profile, initialTier = saved?.tier ?: BotSimulationTier.DIRECTORY, persist = false)
+			if (saved != null) states[profile.botId] = saved
 		}
-		
+
+		// Rebuild per-zone active counters from restored tiers (prevents cap bypass after restart)
+		states.values.forEach { state ->
+			if (state.tier == BotSimulationTier.LOCAL || state.tier == BotSimulationTier.COMPANION) {
+				activeBotCountPerZone.computeIfAbsent(state.planet) { AtomicInteger(0) }.incrementAndGet()
+			}
+		}
+
 		// If no bots loaded, initialize seed data for testing
 		if (loaded.isEmpty()) {
 			Log.i("No persisted bots found. Loading Phase 1 seed data (50 test bots)...")

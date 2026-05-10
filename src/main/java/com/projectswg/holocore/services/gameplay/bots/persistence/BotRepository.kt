@@ -30,8 +30,8 @@ interface BotRepository {
 	fun deleteBotMemory(botId: String, playerId: Long): Boolean
 	
 	// Batch operations
-	fun saveBotProfiles(profiles: List<BotProfile>): Boolean
-	fun saveBotStates(states: List<BotState>): Boolean
+	fun saveBotProfiles(profileList: List<BotProfile>): Boolean
+	fun saveBotStates(stateList: List<BotState>): Boolean
 	
 	// Query operations
 	fun getBotsByPlanet(planet: String): List<BotProfile>

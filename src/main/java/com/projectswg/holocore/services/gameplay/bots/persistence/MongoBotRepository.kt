@@ -51,7 +51,7 @@ class MongoBotRepository(database: MongoDatabase) : BotRepository {
 			memories.createIndex(Indexes.ascending("playerId"), IndexOptions().unique(false))
 			Log.i("MongoBotRepository: indexes created on bot_profiles, bot_states, bot_memories (%dms)", System.currentTimeMillis() - t0)
 		} catch (e: Exception) {
-			Log.w("MongoBotRepository: index creation failed — queries may be slow: %s", e.message)
+			Log.w("MongoBotRepository: index creation failed after %dms — queries may be slow: %s", System.currentTimeMillis() - t0, e.message)
 		}
 	}
 
@@ -129,13 +129,13 @@ class MongoBotRepository(database: MongoDatabase) : BotRepository {
 
 	// ─── Batch operations ─────────────────────────────────────────────────────
 
-	override fun saveBotProfiles(profiles: List<BotProfile>): Boolean {
-		profiles.forEach { saveBotProfile(it) }
+	override fun saveBotProfiles(profileList: List<BotProfile>): Boolean {
+		profileList.forEach { saveBotProfile(it) }
 		return true
 	}
 
-	override fun saveBotStates(states: List<BotState>): Boolean {
-		states.forEach { saveBotState(it) }
+	override fun saveBotStates(stateList: List<BotState>): Boolean {
+		stateList.forEach { saveBotState(it) }
 		return true
 	}
 
@@ -150,7 +150,7 @@ class MongoBotRepository(database: MongoDatabase) : BotRepository {
 	override fun getExpiredMemories(beforeEpochSeconds: Long): List<BotMemory> {
 		val cutoffMs = beforeEpochSeconds * 1_000L
 		return memories.find(
-			Filters.and(Filters.gt("expiresAt", 0L), Filters.lt("expiresAt", cutoffMs))
+			Filters.and(Filters.ne("expiresAt", null), Filters.lt("expiresAt", cutoffMs))
 		).mapNotNull { safeDoc(it, ::docToMemory, "bot_memories") }.toList()
 	}
 
@@ -269,7 +269,7 @@ class MongoBotRepository(database: MongoDatabase) : BotRepository {
 		return try {
 			converter(doc)
 		} catch (e: Exception) {
-			Log.e("MongoBotRepository: skipping malformed %s document %s: %s", collectionName, doc["_id"], e.message)
+			Log.e("MongoBotRepository: skipping malformed %s document %s: %s: %s", collectionName, doc["_id"], e.javaClass.simpleName, e.message)
 			null
 		}
 	}
