@@ -395,7 +395,19 @@ class AdminBotService : Service() {
 
 		when (subcommand) {
 			"recruit" -> {
-				sendMessage(admin, "[BOT] Companion wiring requires world-object support (Phase D). Usage: /companion recruit <bot_id>")
+				val botIdArg = args.getOrNull(1)
+				if (botIdArg == null) {
+					sendMessage(admin, "[BOT] Usage: /companion recruit <bot_id>")
+				} else {
+					val player = admin.owner
+					if (player == null) {
+						sendMessage(admin, "[BOT] Cannot recruit companion: no active player session.")
+					} else {
+						val ok = botCompanionService.recruitCompanion(player, botIdArg)
+						if (ok) sendMessage(admin, "[BOT] Companion $botIdArg recruited.")
+						else sendMessage(admin, "[BOT] $botIdArg already has an owner.")
+					}
+				}
 			}
 			"release" -> {
 				val botIdArg = args.getOrNull(1)
