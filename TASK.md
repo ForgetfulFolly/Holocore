@@ -96,3 +96,5 @@ No other changes to the file.
 3. /qatool companion:release:bot_001 -> "[BOT] Companion bot_001 released."
 4. ./gradlew test -- BUILD SUCCESSFUL
 5. git diff main..HEAD --name-only shows AdminBotService.kt
+
+Team: bravo
