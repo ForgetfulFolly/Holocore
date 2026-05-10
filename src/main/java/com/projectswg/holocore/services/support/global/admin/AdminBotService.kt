@@ -85,37 +85,54 @@ class AdminBotService : Service() {
 	}
 
 	/**
-	 * `/qatool <subcommand> [args...]` — universal bot command relay.
-	 * Routes through the client-known 'qatool' command to bypass client TRE table validation.
-	 * Usage: /qatool spawn bot_001 | /qatool kill | /qatool info bot_001 | /qatool stats [zone]
-	 *        /qatool tier bot_001 LOCAL | /qatool tell bot_001 <msg> | /qatool telemetry [zones]
-	 *        /qatool memory bot_001 [clear <pid>] | /qatool companion release bot_001
+	 * Bot command relay through the client-known 'qatool' command.
+	 *
+	 * The SWG client strips the first word of the argument string before sending, so only
+	 * the second word onwards arrives in intent.arguments. Proven command syntax:
+	 *
+	 *   /qatool <botId>              — spawn a bot at your location (e.g. /qatool bot_001)
+	 *   /qatool kill                 — despawn all active bots
+	 *   /qatool stats                — show tatooine bot statistics
+	 *   /qatool stats:<zone>         — show stats for specific zone (e.g. /qatool stats:naboo)
+	 *   /qatool info:<botId>         — show profile + state (e.g. /qatool info:bot_001)
+	 *   /qatool tier:<botId>:<TIER>  — set tier LOCAL/DIRECTORY/COMPANION
+	 *   /qatool tell:<botId>:<msg>   — send a tell to a bot
+	 *   /qatool activity:<botId>:<A> — set bot activity
+	 *
+	 * Multi-part commands use colon encoding (no spaces) to avoid client stripping.
 	 */
 	private fun handleQaTool(admin: CreatureObject, args: List<String>): Boolean {
 		if (args.isEmpty() || args[0].isBlank()) {
-			sendMessage(admin, "[BOT] Usage: /qatool spawn <id> | kill | info <id> | tier <id> LOCAL|DIRECTORY | stats [zone]")
+			sendMessage(admin, "[BOT] Usage: /qatool <botId>  |  kill  |  stats[:<zone>]  |  info:<id>  |  tier:<id>:<TIER>")
 			return true
 		}
-		// Debug: echo args so we can see what the client actually sent
-		sendMessage(admin, "[BOT-DEBUG] args[0]='${args[0]}' argc=${args.size} raw='${args.joinToString("|")}'")
-		val subArgs = if (args.size > 1) args.drop(1) else emptyList()
-		return when (args[0].lowercase(java.util.Locale.US)) {
-			"spawn" -> handleSpawnBots(admin, subArgs)
-			"info" -> handleBotInfo(admin, subArgs)
-			"tell" -> handleTellBot(admin, subArgs)
-			"kill" -> handleKillBots(admin)
-			"tier" -> handleBotTier(admin, subArgs)
-			"activity" -> handleBotActivity(admin, subArgs)
-			"telemetry" -> handleTelemetry(admin, subArgs)
-			"memory" -> handleBotMemory(admin, subArgs)
-			"companion" -> handleCompanion(admin, subArgs)
-			"stats" -> handleSpawnBots(admin, listOf("stats") + subArgs)
-			else -> {
-				// If it looks like a bot ID (not a known subcommand), treat as implicit spawn
-				sendMessage(admin, "[BOT] Treating '${args[0]}' as botId for spawn. Use: /qatool spawn <id>")
-				handleSpawnBots(admin, args)
+		// Named single-word subcommands (survive the client strip because they are the only word)
+		when (args[0].lowercase(java.util.Locale.US)) {
+			"kill"  -> return handleKillBots(admin)
+			"stats" -> return handleSpawnBots(admin, listOf("stats", "tatooine"))
+		}
+		// Colon-encoded multi-part commands (no spaces = not stripped by client)
+		// e.g. info:bot_001 | tier:bot_001:LOCAL | stats:tatooine
+		if (args[0].contains(':')) {
+			val parts = args[0].split(':', limit = 3)
+			val rest = parts.drop(1)
+			return when (parts[0].lowercase(java.util.Locale.US)) {
+				"info"      -> handleBotInfo(admin, rest)
+				"tier"      -> handleBotTier(admin, rest)
+				"tell"      -> handleTellBot(admin, rest)
+				"activity"  -> handleBotActivity(admin, rest)
+				"telemetry" -> handleTelemetry(admin, rest)
+				"memory"    -> handleBotMemory(admin, rest)
+				"companion" -> handleCompanion(admin, rest)
+				"stats"     -> handleSpawnBots(admin, listOf("stats") + rest)
+				else        -> {
+					sendMessage(admin, "[BOT] Unknown command '${parts[0]}'. Try: kill, stats, info:<id>, tier:<id>:<TIER>")
+					false
+				}
 			}
 		}
+		// Fallback: any unrecognized single word is treated as a bot ID to spawn
+		return handleSpawnBots(admin, args)
 	}
 
 	/**

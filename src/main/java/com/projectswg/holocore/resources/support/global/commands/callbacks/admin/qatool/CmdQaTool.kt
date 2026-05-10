@@ -47,7 +47,7 @@ import me.joshlarson.jlcommon.log.Log
 class CmdQaTool : ICmdCallback {
 	override fun execute(player: Player, target: SWGObject?, args: String) {
 		if (args.indexOf(" ") == -1) {
-			broadcastPersonal(player, "Invalid call to qatool: no command provided")
+			// Single-word args are handled by other services (e.g. AdminBotService bot relay)
 			return
 		}
 		val commandName = args.substring(0, args.indexOf(" "))
@@ -58,6 +58,8 @@ class CmdQaTool : ICmdCallback {
 			"recover"      -> recoverPlayer(player, args.substring(args.indexOf(' ') + 1))
 			"setinstance"  -> setInstance(player, args.substring(args.indexOf(' ') + 1))
 			"details"      -> QaToolDetails.sendDetails(player, target, args)
+			// Bot relay subcommands — handled by AdminBotService, suppress SUI popup
+			"bot", "spawn", "info", "kill", "tier", "tell", "activity", "telemetry", "memory", "companion", "stats" -> { /* delegated */ }
 			else           -> createPrimaryWindow(player)
 		}
 		Log.i("%s has accessed the QA Tool", player.username)
