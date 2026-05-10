@@ -14,12 +14,14 @@ class BotCompanionService : Service() {
 
 	override fun start(): Boolean {
 		instance = this
+		BotServiceHub.companionService = this
 		return super.start()
 	}
 
 	override fun stop(): Boolean {
 		if (instance === this) {
 			instance = null
+			if (BotServiceHub.companionService === this) BotServiceHub.companionService = null
 		}
 		return super.stop()
 	}

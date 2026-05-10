@@ -62,9 +62,11 @@ class AdminBotService : Service() {
 			return
 		}
 		val command = intent.command.crc
-		val args = intent.arguments.split("\\s+".toRegex(), limit = 5)
+		// Split with limit=6 so the last element may contain spaces (e.g. tell messages)
+		val args = intent.arguments.trim().split("\\s+".toRegex(), limit = 6)
 
 		val handled = when (command) {
+			COMMAND_QATOOL -> handleQaTool(admin, args)
 			COMMAND_BOT_SPAWN -> handleSpawnBots(admin, args)
 			COMMAND_BOT_INFO -> handleBotInfo(admin, args)
 			COMMAND_BOT_TELL -> handleTellBot(admin, args)
@@ -79,6 +81,36 @@ class AdminBotService : Service() {
 
 		if (!handled) {
 			sendMessage(admin, "[BOT] Unknown command or insufficient arguments.")
+		}
+	}
+
+	/**
+	 * `/qatool <subcommand> [args...]` — universal bot command relay.
+	 * Routes through the client-known 'qatool' command to bypass client TRE table validation.
+	 * Usage: /qatool spawn bot_001 | /qatool kill | /qatool info bot_001 | /qatool stats [zone]
+	 *        /qatool tier bot_001 LOCAL | /qatool tell bot_001 <msg> | /qatool telemetry [zones]
+	 *        /qatool memory bot_001 [clear <pid>] | /qatool companion release bot_001
+	 */
+	private fun handleQaTool(admin: CreatureObject, args: List<String>): Boolean {
+		if (args.isEmpty() || args[0].isBlank()) {
+			sendMessage(admin, "[BOT] /qatool <spawn|info|tell|kill|tier|activity|telemetry|memory|companion> [args...]")
+			return true
+		}
+		val subArgs = if (args.size > 1) args.drop(1) else emptyList()
+		return when (args[0].lowercase(java.util.Locale.US)) {
+			"spawn" -> handleSpawnBots(admin, subArgs)
+			"info" -> handleBotInfo(admin, subArgs)
+			"tell" -> handleTellBot(admin, subArgs)
+			"kill" -> handleKillBots(admin)
+			"tier" -> handleBotTier(admin, subArgs)
+			"activity" -> handleBotActivity(admin, subArgs)
+			"telemetry" -> handleTelemetry(admin, subArgs)
+			"memory" -> handleBotMemory(admin, subArgs)
+			"companion" -> handleCompanion(admin, subArgs)
+			else -> {
+				sendMessage(admin, "[BOT] Unknown subcommand '${args[0]}'. Valid: spawn, info, tell, kill, tier, activity, telemetry, memory, companion")
+				false
+			}
 		}
 	}
 
@@ -386,6 +418,9 @@ class AdminBotService : Service() {
 	}
 
 	companion object {
+		/** Primary relay — uses client-known 'qatool' command to avoid client TRE table rejection. */
+		private val COMMAND_QATOOL = CRC.getCrc("qatool")
+		/** Legacy individual command CRCs — kept for future use if client TREs are patched. */
 		private val COMMAND_BOT_SPAWN = CRC.getCrc("spawnbots")
 		private val COMMAND_BOT_INFO = CRC.getCrc("botinfo")
 		private val COMMAND_BOT_TELL = CRC.getCrc("bottell")

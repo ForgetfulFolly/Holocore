@@ -13,12 +13,14 @@ class BotTelemetryService : Service() {
 
 	override fun start(): Boolean {
 		instance = this
+		BotServiceHub.telemetryService = this
 		return super.start()
 	}
 
 	override fun stop(): Boolean {
 		if (instance === this) {
 			instance = null
+			if (BotServiceHub.telemetryService === this) BotServiceHub.telemetryService = null
 		}
 		return super.stop()
 	}
