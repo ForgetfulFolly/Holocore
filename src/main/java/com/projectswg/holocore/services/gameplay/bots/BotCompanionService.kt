@@ -15,7 +15,7 @@ class BotCompanionService : Service() {
 	override fun start(): Boolean {
 		instance = this
 		BotServiceHub.companionService = this
-		return super.start()
+		return true
 	}
 
 	override fun stop(): Boolean {
@@ -23,7 +23,7 @@ class BotCompanionService : Service() {
 			instance = null
 			if (BotServiceHub.companionService === this) BotServiceHub.companionService = null
 		}
-		return super.stop()
+		return true
 	}
 
 	private val companionOwnerByBot = ConcurrentHashMap<String, Long>()

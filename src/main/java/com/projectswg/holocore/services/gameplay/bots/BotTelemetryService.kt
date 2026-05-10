@@ -14,7 +14,7 @@ class BotTelemetryService : Service() {
 	override fun start(): Boolean {
 		instance = this
 		BotServiceHub.telemetryService = this
-		return super.start()
+		return true
 	}
 
 	override fun stop(): Boolean {
@@ -22,7 +22,7 @@ class BotTelemetryService : Service() {
 			instance = null
 			if (BotServiceHub.telemetryService === this) BotServiceHub.telemetryService = null
 		}
-		return super.stop()
+		return true
 	}
 
 	private val promotions = AtomicLong(0)
