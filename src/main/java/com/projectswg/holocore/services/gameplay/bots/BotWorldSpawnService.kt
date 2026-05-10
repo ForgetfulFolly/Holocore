@@ -197,6 +197,9 @@ class BotWorldSpawnService : Service() {
 	/** Number of bots currently tracked in the world. */
 	fun getSpawnedCount(): Int = spawnedBots.size
 
+	/** Return the set of botIds currently tracked in the world. */
+	fun getSpawnedBotIds(): Set<String> = spawnedBots.keys.toSet()
+
 	/**
 	 * Return the [AIObject.objectId] of a spawned bot, or null if not tracked.
 	 * Single source of truth — replaces the now-removed [BotPopulationService.spawnedWorldObjects].

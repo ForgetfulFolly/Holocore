@@ -122,7 +122,10 @@ class AdminBotService : Service() {
 			return false
 		}
 
-		val state = botPopulationService.getState(botId)!!
+		val state = botPopulationService.getState(botId) ?: run {
+			sendMessage(admin, "[BOT] State not found for bot: $botId")
+			return false
+		}
 
 		sendMessage(admin, "=== Bot Information ===")
 		sendMessage(admin, "ID: $botId")
@@ -177,14 +180,24 @@ class AdminBotService : Service() {
 	}
 
 	/**
-	 * `/admin kill bots`
-	 */
-	/**
-	 * `/admin kill bots`
+	 * `/admin botkill` — despawn all active bots and demote to DIRECTORY.
 	 */
 	private fun handleKillBots(admin: CreatureObject): Boolean {
-		val stats = botPopulationService.getStatistics()
-		sendMessage(admin, "[BOT] Current spawned world objects: ${stats.totalSpawned}")
+		val spawnService = BotServiceHub.worldSpawnService
+		if (spawnService == null) {
+			sendMessage(admin, "[BOT] World spawn service unavailable.")
+			return true
+		}
+		val ids = spawnService.getSpawnedBotIds()
+		if (ids.isEmpty()) {
+			sendMessage(admin, "[BOT] No active bots to kill.")
+			return true
+		}
+		var killed = 0
+		for (botId in ids) {
+			if (botPopulationService.demoteToBackground(botId)) killed++
+		}
+		sendMessage(admin, "[BOT] Killed $killed bot(s).")
 		return true
 	}
 
@@ -195,11 +208,17 @@ class AdminBotService : Service() {
 		if (args.size < 2) return false
 
 		val botId = args[0]
-		val tierIndex = args[1].toIntOrNull() ?: return false
-
-		if (tierIndex < 0 || tierIndex >= BotSimulationTier.entries.size) return false
-
-		val tier = BotSimulationTier.entries[tierIndex]
+		val tierArg = args[1]
+		// Accept either symbolic name ("LOCAL") or ordinal index ("1")
+		val tier = tierArg.toIntOrNull()?.let { idx ->
+			if (idx < 0 || idx >= BotSimulationTier.entries.size) return false
+			BotSimulationTier.entries[idx]
+		} ?: try {
+			BotSimulationTier.valueOf(tierArg.uppercase(java.util.Locale.US))
+		} catch (e: IllegalArgumentException) {
+			sendMessage(admin, "[BOT] Unknown tier '$tierArg'. Valid: ${BotSimulationTier.entries.joinToString()}")
+			return false
+		}
 		val success = botPopulationService.setTier(botId, tier)
 
 		if (success) {
@@ -373,8 +392,8 @@ class AdminBotService : Service() {
 		private val COMMAND_BOT_KILL = CRC.getCrc("botkill")
 		private val COMMAND_BOT_TIER = CRC.getCrc("bottier")
 		private val COMMAND_BOT_ACTIVITY = CRC.getCrc("botactivity")
-		private val COMMAND_BOT_TELEMETRY = CRC.getCrc("telemetry")
+		private val COMMAND_BOT_TELEMETRY = CRC.getCrc("bottelemetry")
 		private val COMMAND_BOT_MEMORY = CRC.getCrc("botmemory")
-		private val COMMAND_BOT_COMPANION = CRC.getCrc("companion")
+		private val COMMAND_BOT_COMPANION = CRC.getCrc("botcompanion")
 	}
 }
