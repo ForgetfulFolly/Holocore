@@ -93,9 +93,11 @@ class AdminBotService : Service() {
 	 */
 	private fun handleQaTool(admin: CreatureObject, args: List<String>): Boolean {
 		if (args.isEmpty() || args[0].isBlank()) {
-			sendMessage(admin, "[BOT] /qatool <spawn|info|tell|kill|tier|activity|telemetry|memory|companion> [args...]")
+			sendMessage(admin, "[BOT] Usage: /qatool spawn <id> | kill | info <id> | tier <id> LOCAL|DIRECTORY | stats [zone]")
 			return true
 		}
+		// Debug: echo args so we can see what the client actually sent
+		sendMessage(admin, "[BOT-DEBUG] args[0]='${args[0]}' argc=${args.size} raw='${args.joinToString("|")}'")
 		val subArgs = if (args.size > 1) args.drop(1) else emptyList()
 		return when (args[0].lowercase(java.util.Locale.US)) {
 			"spawn" -> handleSpawnBots(admin, subArgs)
@@ -107,9 +109,11 @@ class AdminBotService : Service() {
 			"telemetry" -> handleTelemetry(admin, subArgs)
 			"memory" -> handleBotMemory(admin, subArgs)
 			"companion" -> handleCompanion(admin, subArgs)
+			"stats" -> handleSpawnBots(admin, listOf("stats") + subArgs)
 			else -> {
-				sendMessage(admin, "[BOT] Unknown subcommand '${args[0]}'. Valid: spawn, info, tell, kill, tier, activity, telemetry, memory, companion")
-				false
+				// If it looks like a bot ID (not a known subcommand), treat as implicit spawn
+				sendMessage(admin, "[BOT] Treating '${args[0]}' as botId for spawn. Use: /qatool spawn <id>")
+				handleSpawnBots(admin, args)
 			}
 		}
 	}
