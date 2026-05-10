@@ -39,6 +39,7 @@ import com.projectswg.holocore.resources.support.data.server_info.loader.DataLoa
 import com.projectswg.holocore.resources.support.data.server_info.loader.ServerData.schematicGroups
 import com.projectswg.holocore.resources.support.data.server_info.loader.SkillLoader.SkillInfo
 import com.projectswg.holocore.resources.support.objects.swg.creature.CreatureObject
+import com.projectswg.holocore.resources.support.global.player.AccessLevel
 import com.projectswg.holocore.services.gameplay.player.experience.*
 import me.joshlarson.jlcommon.control.IntentHandler
 import me.joshlarson.jlcommon.control.Service
@@ -196,7 +197,7 @@ class SkillService : Service() {
 		val pointsRequired = skill.pointsRequired
 		val skillPointsSpent = skillPointsSpent(target)
 
-		if (skillPointsSpent + pointsRequired > SKILL_POINT_CAP) {
+		if (target.owner?.accessLevel != AccessLevel.DEV && skillPointsSpent + pointsRequired > SKILL_POINT_CAP) {
 			val missingPoints = pointsRequired - (SKILL_POINT_CAP - skillPointsSpent)
 
 			StandardLog.onPlayerError(this, target, "cannot learn %s because they lack %d skill points", skill.name, missingPoints)
