@@ -1,0 +1,4 @@
+prerequisite_tasks	exclusion_tasks	attach_script	journal_entry_title	journal_entry_description	tasks_on_complete	tasks_on_fail	target	parameter	is_visible	show_system_messages	allow_repeats
+
+			@spacequest/destroy_surpriseattack/poi_tatooine_generic_1_a:unused1_t	@spacequest/destroy_surpriseattack/poi_tatooine_generic_1_a:unused1_d					true	false	true
+			@spacequest/destroy_surpriseattack/poi_tatooine_generic_1_a:unused2_t	@spacequest/destroy_surpriseattack/poi_tatooine_generic_1_a:unused2_d					true	false	true
