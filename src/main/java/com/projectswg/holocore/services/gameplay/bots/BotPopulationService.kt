@@ -131,7 +131,7 @@ class BotPopulationService : Service() {
 	 * Respects per-zone active caps.
 	 */
 	fun promoteToLocal(botId: String, zoneName: String): Boolean {
-		profiles[botId] ?: return false
+		val profile = profiles[botId] ?: return false
 		val state = states[botId] ?: return false
 		
 		if (state.tier != BotSimulationTier.DIRECTORY && state.tier != BotSimulationTier.REGIONAL) {
@@ -154,6 +154,7 @@ class BotPopulationService : Service() {
 		activeCount.incrementAndGet()
 		repository.saveBotState(state)
 		BotServiceHub.telemetryService?.onPromotion()
+		BotServiceHub.worldSpawnService?.spawnBotObject(profile, state)
 		
 		Log.d("Bot %s promoted to LOCAL in zone %s (%d/%d active)", 
 			botId, zoneName, activeCount.get(), activeCap)
@@ -177,7 +178,8 @@ class BotPopulationService : Service() {
 			activeCount.decrementAndGet()
 		}
 
-		// Despawn world object if tracked
+		// Despawn world object
+		BotServiceHub.worldSpawnService?.despawnBotObject(botId)
 		spawnedWorldObjects.remove(botId)
 
 		// Demote the bot

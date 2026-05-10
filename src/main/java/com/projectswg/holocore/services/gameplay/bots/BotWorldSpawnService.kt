@@ -37,6 +37,7 @@ import com.projectswg.holocore.resources.support.npc.spawn.SimpleSpawnInfo
 import com.projectswg.holocore.resources.support.npc.spawn.Spawner
 import com.projectswg.holocore.resources.support.npc.spawn.SpawnerType
 import com.projectswg.holocore.resources.support.objects.ObjectCreator
+import com.projectswg.holocore.resources.support.objects.swg.SWGObject
 import com.projectswg.holocore.resources.support.objects.swg.creature.CreatureDifficulty
 import com.projectswg.holocore.resources.support.objects.swg.custom.AIBehavior
 import com.projectswg.holocore.resources.support.objects.swg.custom.AIObject
@@ -56,11 +57,18 @@ import java.util.concurrent.ConcurrentHashMap
  *
  * Callers (e.g. [BotPopulationService.promoteToLocal]) should use [spawnBotObject]
  * and [despawnBotObject] to keep world state in sync with simulation tier changes.
+ *
+ * START-ORDER REQUIREMENT: This service must start AFTER [BotPopulationService] so
+ * that [BotServiceHub.populationService] is registered when [start] runs. The order
+ * is enforced by [BotManager]'s [ManagerStructure] children list — do not reorder it.
  */
 class BotWorldSpawnService : Service() {
 
-	/** botId → live AIObject in the game world */
-	private val spawnedObjects = ConcurrentHashMap<String, AIObject>()
+	/** Tracks both the spawner egg and the live AIObject for each bot in the world. */
+	private data class SpawnedBot(val egg: SWGObject, val aiObject: AIObject)
+
+	/** botId → live objects in the game world */
+	private val spawnedBots = ConcurrentHashMap<String, SpawnedBot>()
 
 	override fun start(): Boolean {
 		BotServiceHub.worldSpawnService = this
@@ -89,13 +97,29 @@ class BotWorldSpawnService : Service() {
 			}
 		}
 
-		Log.i("BotWorldSpawnService: restored %d bot(s), auto-demoted %d (no npcId)", spawned, demoted)
+		Log.i("BotWorldSpawnService: restored %d bot(s), auto-demoted %d (un-spawnable)", spawned, demoted)
 		return true
 	}
 
 	override fun stop(): Boolean {
-		spawnedObjects.values.forEach { DestroyObjectIntent(it).broadcast() }
-		spawnedObjects.clear()
+		// Sync live AIObject positions back into BotState before destroying world objects,
+		// so BotPopulationService.stop() (which runs after in reverse order) saves fresh coords.
+		val pop = BotServiceHub.populationService
+		spawnedBots.forEach { (botId, spawned) ->
+			if (pop != null) {
+				val state = pop.getState(botId)
+				if (state != null) {
+					val loc = spawned.aiObject.worldLocation
+					state.x = loc.x
+					state.y = loc.y
+					state.z = loc.z
+					state.heading = loc.yaw.toFloat()
+				}
+			}
+			DestroyObjectIntent(spawned.aiObject).broadcast()
+			DestroyObjectIntent(spawned.egg).broadcast()
+		}
+		spawnedBots.clear()
 		if (BotServiceHub.worldSpawnService === this) BotServiceHub.worldSpawnService = null
 		return super.stop()
 	}
@@ -127,8 +151,10 @@ class BotWorldSpawnService : Service() {
 			.setHeading(state.heading.toDouble())
 			.build()
 
+		var createdEgg: SWGObject? = null
 		return try {
 			val egg = ObjectCreator.createObjectFromTemplate(SpawnerType.WAYPOINT_AUTO_SPAWN.objectTemplate)
+			createdEgg = egg
 			egg.moveToContainer(null, location)
 			ObjectCreatedIntent(egg).broadcast()
 
@@ -144,11 +170,12 @@ class BotWorldSpawnService : Service() {
 				.build()
 
 			val aiObject = NPCCreator.createSingleNpc(Spawner(spawnInfo, egg))
-			spawnedObjects[profile.botId] = aiObject
+			spawnedBots[profile.botId] = SpawnedBot(egg, aiObject)
 			BotServiceHub.populationService?.trackWorldObject(profile.botId, aiObject.objectId)
 			Log.d("BotWorldSpawnService: spawned bot '%s' (%s) at %s", profile.botId, npcId, location)
 			aiObject
 		} catch (e: Exception) {
+			createdEgg?.let { DestroyObjectIntent(it).broadcast() }
 			Log.e("BotWorldSpawnService: failed to spawn bot '%s': %s: %s", profile.botId, e.javaClass.simpleName, e.message)
 			null
 		}
@@ -158,13 +185,12 @@ class BotWorldSpawnService : Service() {
 	 * Remove a bot's world object and clean up tracking state.
 	 */
 	fun despawnBotObject(botId: String) {
-		val obj = spawnedObjects.remove(botId) ?: return
-		DestroyObjectIntent(obj).broadcast()
+		val spawned = spawnedBots.remove(botId) ?: return
+		DestroyObjectIntent(spawned.aiObject).broadcast()
+		DestroyObjectIntent(spawned.egg).broadcast()
 		Log.d("BotWorldSpawnService: despawned bot '%s'", botId)
 	}
 
-	/** Map planet name (as stored in BotState) to a [Terrain] value. */
-	private fun terrainForPlanet(planet: String): Terrain? {
-		return Terrain.entries.firstOrNull { it.getName().equals(planet, ignoreCase = true) }
-	}
+	/** Map planet name (as stored in BotState) to a [Terrain] value. Uses the enum's own lookup table. */
+	private fun terrainForPlanet(planet: String): Terrain? = Terrain.getTerrainFromName(planet)
 }

@@ -51,6 +51,19 @@ object BotSeedData {
 
 	private val factions = listOf("Rebel", "Empire", "Neutral")
 
+	/** Maps species name (as used in [species]) to a verified npcId from the server's npc.sdb files. */
+	private val speciesNpcId = mapOf(
+		"Human"        to "humanoid_commoner",
+		"Zabrak"       to "humanoid_commoner_zabrak",
+		"Twi'lek"      to "humanoid_commoner_twilek",
+		"Mon Calamari" to "humanoid_scientist_moncal_male",
+		"Wookiee"      to "humanoid_wookiee_brawler",
+		"Ithorian"     to "humanoid_ithorian_musician",
+		"Trandoshan"   to "humanoid_trandoshan_slaver",
+		"Sullustan"    to "humanoid_patron_sullustan",
+		"Rodian"       to "humanoid_rodian_thug",
+	)
+
 	private val personalityTags = listOf(
 		"friendly", "gruff", "sarcastic", "mysterious", "cheerful",
 		"brooding", "energetic", "calm", "adventurous", "cautious"
@@ -82,7 +95,8 @@ object BotSeedData {
 					faction = faction,
 					homePlanet = zone,
 					personalityTags = tags,
-					speechStyle = "neutral"
+					speechStyle = "neutral",
+					npcId = speciesNpcId[species] ?: "humanoid_commoner",
 				)
 			)
 		}

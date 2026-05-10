@@ -32,6 +32,8 @@ class BotPopulationServiceTest {
 		service = null
 		BotServiceHub.testRepositoryOverride = null
 		BotServiceHub.populationService = null
+		// Reset singleton repository so subsequent tests in the same JVM see a clean state.
+		BotServiceHub.repository = InMemoryBotRepository()
 	}
 
 	/**
