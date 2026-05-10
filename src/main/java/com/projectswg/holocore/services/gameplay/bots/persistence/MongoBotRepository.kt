@@ -34,20 +34,25 @@ class MongoBotRepository(database: MongoDatabase) : BotRepository {
 	private val memories = database.getCollection("bot_memories")
 
 	init {
-		profiles.createIndex(Indexes.ascending("botId"),     IndexOptions().unique(true))
-		profiles.createIndex(Indexes.ascending("homePlanet"), IndexOptions().unique(false))
-		profiles.createIndex(Indexes.ascending("profession"), IndexOptions().unique(false))
+		val t0 = System.currentTimeMillis()
+		try {
+			profiles.createIndex(Indexes.ascending("botId"),     IndexOptions().unique(true))
+			profiles.createIndex(Indexes.ascending("homePlanet"), IndexOptions().unique(false))
+			profiles.createIndex(Indexes.ascending("profession"), IndexOptions().unique(false))
 
-		states.createIndex(Indexes.ascending("botId"),  IndexOptions().unique(true))
-		states.createIndex(Indexes.ascending("tier"),   IndexOptions().unique(false))
-		states.createIndex(Indexes.ascending("planet"), IndexOptions().unique(false))
+			states.createIndex(Indexes.ascending("botId"),  IndexOptions().unique(true))
+			states.createIndex(Indexes.ascending("tier"),   IndexOptions().unique(false))
+			states.createIndex(Indexes.ascending("planet"), IndexOptions().unique(false))
 
-		memories.createIndex(
-			Indexes.compoundIndex(Indexes.ascending("botId"), Indexes.ascending("playerId")),
-			IndexOptions().unique(true)
-		)
-		memories.createIndex(Indexes.ascending("playerId"), IndexOptions().unique(false))
-		Log.i("MongoBotRepository: indexes created on bot_profiles, bot_states, bot_memories")
+			memories.createIndex(
+				Indexes.compoundIndex(Indexes.ascending("botId"), Indexes.ascending("playerId")),
+				IndexOptions().unique(true)
+			)
+			memories.createIndex(Indexes.ascending("playerId"), IndexOptions().unique(false))
+			Log.i("MongoBotRepository: indexes created on bot_profiles, bot_states, bot_memories (%dms)", System.currentTimeMillis() - t0)
+		} catch (e: Exception) {
+			Log.w("MongoBotRepository: index creation failed — queries may be slow: %s", e.message)
+		}
 	}
 
 	// ─── Profile operations ───────────────────────────────────────────────────
@@ -62,10 +67,10 @@ class MongoBotRepository(database: MongoDatabase) : BotRepository {
 	}
 
 	override fun loadBotProfile(botId: String): BotProfile? =
-		profiles.find(Filters.eq("botId", botId)).first()?.let { docToProfile(it) }
+		profiles.find(Filters.eq("botId", botId)).first()?.let { safeDoc(it, ::docToProfile, "bot_profiles") }
 
 	override fun getAllBotProfiles(): List<BotProfile> =
-		profiles.find().map { docToProfile(it) }.toList()
+		profiles.find().mapNotNull { safeDoc(it, ::docToProfile, "bot_profiles") }.toList()
 
 	override fun deleteBotProfile(botId: String): Boolean {
 		profiles.deleteOne(Filters.eq("botId", botId))
@@ -86,7 +91,10 @@ class MongoBotRepository(database: MongoDatabase) : BotRepository {
 	}
 
 	override fun loadBotState(botId: String): BotState? =
-		states.find(Filters.eq("botId", botId)).first()?.let { docToState(it) }
+		states.find(Filters.eq("botId", botId)).first()?.let { safeDoc(it, ::docToState, "bot_states") }
+
+	override fun getAllBotStates(): List<BotState> =
+		states.find().mapNotNull { safeDoc(it, ::docToState, "bot_states") }.toList()
 
 	override fun updateBotState(botId: String, state: BotState): Boolean = saveBotState(state)
 
@@ -104,13 +112,13 @@ class MongoBotRepository(database: MongoDatabase) : BotRepository {
 	override fun loadBotMemory(botId: String, playerId: Long): BotMemory? =
 		memories.find(
 			Filters.and(Filters.eq("botId", botId), Filters.eq("playerId", playerId))
-		).first()?.let { docToMemory(it) }
+		).first()?.let { safeDoc(it, ::docToMemory, "bot_memories") }
 
 	override fun getAllBotMemoryForBot(botId: String): List<BotMemory> =
-		memories.find(Filters.eq("botId", botId)).map { docToMemory(it) }.toList()
+		memories.find(Filters.eq("botId", botId)).mapNotNull { safeDoc(it, ::docToMemory, "bot_memories") }.toList()
 
 	override fun getAllBotMemoryForPlayer(playerId: Long): List<BotMemory> =
-		memories.find(Filters.eq("playerId", playerId)).map { docToMemory(it) }.toList()
+		memories.find(Filters.eq("playerId", playerId)).mapNotNull { safeDoc(it, ::docToMemory, "bot_memories") }.toList()
 
 	override fun deleteBotMemory(botId: String, playerId: Long): Boolean {
 		memories.deleteOne(
@@ -121,41 +129,44 @@ class MongoBotRepository(database: MongoDatabase) : BotRepository {
 
 	// ─── Batch operations ─────────────────────────────────────────────────────
 
-	override fun saveBotProfiles(profileList: List<BotProfile>): Boolean {
-		profileList.forEach { saveBotProfile(it) }
+	override fun saveBotProfiles(profiles: List<BotProfile>): Boolean {
+		profiles.forEach { saveBotProfile(it) }
 		return true
 	}
 
-	override fun saveBotStates(stateList: List<BotState>): Boolean {
-		stateList.forEach { saveBotState(it) }
+	override fun saveBotStates(states: List<BotState>): Boolean {
+		states.forEach { saveBotState(it) }
 		return true
 	}
 
 	// ─── Query operations ─────────────────────────────────────────────────────
 
 	override fun getBotsByPlanet(planet: String): List<BotProfile> =
-		profiles.find(Filters.eq("homePlanet", planet)).map { docToProfile(it) }.toList()
+		profiles.find(Filters.eq("homePlanet", planet)).mapNotNull { safeDoc(it, ::docToProfile, "bot_profiles") }.toList()
 
 	override fun getBotsByProfession(profession: String): List<BotProfile> =
-		profiles.find(Filters.eq("profession", profession)).map { docToProfile(it) }.toList()
+		profiles.find(Filters.eq("profession", profession)).mapNotNull { safeDoc(it, ::docToProfile, "bot_profiles") }.toList()
 
 	override fun getExpiredMemories(beforeEpochSeconds: Long): List<BotMemory> {
 		val cutoffMs = beforeEpochSeconds * 1_000L
-		return memories.find(Filters.lt("expiresAt", cutoffMs)).map { docToMemory(it) }.toList()
+		return memories.find(
+			Filters.and(Filters.gt("expiresAt", 0L), Filters.lt("expiresAt", cutoffMs))
+		).mapNotNull { safeDoc(it, ::docToMemory, "bot_memories") }.toList()
 	}
 
 	// ─── Administrative ───────────────────────────────────────────────────────
 
 	override fun clearAllBots(): Int {
 		val count = profiles.countDocuments().toInt()
-		profiles.drop()
-		states.drop()
+		profiles.deleteMany(Document())
+		states.deleteMany(Document())
+		memories.deleteMany(Document())
 		return count
 	}
 
 	override fun clearAllBotMemory(): Int {
 		val count = memories.countDocuments().toInt()
-		memories.drop()
+		memories.deleteMany(Document())
 		return count
 	}
 
@@ -192,7 +203,10 @@ class MongoBotRepository(database: MongoDatabase) : BotRepository {
 
 	private fun docToState(d: Document): BotState = BotState(
 		botId    = d.getString("botId"),
-		tier     = BotSimulationTier.valueOf(d.getString("tier") ?: BotSimulationTier.DIRECTORY.name),
+		tier     = d.getString("tier")?.let { name ->
+			BotSimulationTier.entries.firstOrNull { it.name == name }
+				?: run { Log.w("MongoBotRepository: unknown tier '%s', defaulting to DIRECTORY", name); BotSimulationTier.DIRECTORY }
+		} ?: BotSimulationTier.DIRECTORY,
 		activity = d.getString("activity") ?: "idle",
 		planet   = d.getString("planet")   ?: "",
 		groupId  = d.getLong("groupId")    ?: 0L,
@@ -250,4 +264,13 @@ class MongoBotRepository(database: MongoDatabase) : BotRepository {
 	@Suppress("UNCHECKED_CAST")
 	private fun stringList(d: Document, key: String): List<String> =
 		(d[key] as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+
+	private fun <T : Any> safeDoc(doc: Document, converter: (Document) -> T, collectionName: String): T? {
+		return try {
+			converter(doc)
+		} catch (e: Exception) {
+			Log.e("MongoBotRepository: skipping malformed %s document %s: %s", collectionName, doc["_id"], e.message)
+			null
+		}
+	}
 }

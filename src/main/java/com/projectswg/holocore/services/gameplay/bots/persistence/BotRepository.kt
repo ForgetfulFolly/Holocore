@@ -20,6 +20,7 @@ interface BotRepository {
 	fun saveBotState(state: BotState): Boolean
 	fun loadBotState(botId: String): BotState?
 	fun updateBotState(botId: String, state: BotState): Boolean
+	fun getAllBotStates(): List<BotState>
 	
 	// Memory operations
 	fun saveBotMemory(memory: BotMemory): Boolean

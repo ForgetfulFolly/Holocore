@@ -92,6 +92,7 @@ object PswgDatabase {
 	
 	fun close() {
 		mongoClient?.close()
+		mongoClient = null
 		mongoDatabaseRef = null
 	}
 

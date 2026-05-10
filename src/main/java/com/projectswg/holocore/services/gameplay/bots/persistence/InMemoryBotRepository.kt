@@ -40,6 +40,8 @@ class InMemoryBotRepository : BotRepository {
 
 	override fun loadBotState(botId: String): BotState? = states[botId]
 
+	override fun getAllBotStates(): List<BotState> = states.values.toList()
+
 	override fun updateBotState(botId: String, state: BotState): Boolean {
 		return saveBotState(state)
 	}
@@ -101,6 +103,7 @@ class InMemoryBotRepository : BotRepository {
 		val count = profiles.size
 		profiles.clear()
 		states.clear()
+		memory.clear()
 		return count
 	}
 

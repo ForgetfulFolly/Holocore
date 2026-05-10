@@ -62,10 +62,12 @@ class BotPopulationService : Service() {
 		zoneActiveCaps["tatooine"] = 10
 		zoneActiveCaps.putIfAbsent("default", 5)
 		
-		// Load all bot profiles from persistence
+		// Load all bot profiles and restore persisted states from persistence
 		val loaded = repository.getAllBotProfiles()
+		val persistedStates = repository.getAllBotStates().associateBy { it.botId }
 		loaded.forEach { profile ->
-			registerProfile(profile, BotSimulationTier.DIRECTORY)
+			registerProfile(profile, persist = false)
+			persistedStates[profile.botId]?.let { states[profile.botId] = it }
 		}
 		
 		// If no bots loaded, initialize seed data for testing
@@ -92,9 +94,9 @@ class BotPopulationService : Service() {
 		return super.stop()
 	}
 
-	fun registerProfile(profile: BotProfile, initialTier: BotSimulationTier = BotSimulationTier.DIRECTORY) {
+	fun registerProfile(profile: BotProfile, initialTier: BotSimulationTier = BotSimulationTier.DIRECTORY, persist: Boolean = true) {
 		profiles[profile.botId] = profile
-		repository.saveBotProfile(profile)
+		if (persist) repository.saveBotProfile(profile)
 		
 		states.computeIfAbsent(profile.botId) {
 			BotState(
