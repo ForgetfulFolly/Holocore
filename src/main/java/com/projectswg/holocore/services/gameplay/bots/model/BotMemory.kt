@@ -6,7 +6,7 @@ import java.time.Instant
  * Represents a bot's memory of interactions with a specific player.
  * Tracks affinity, conversation history, and behavioral context.
  */
-data class BotMemory(
+class BotMemory(
 	val botId: String,
 	val playerId: Long,
 	val playerName: String,
@@ -70,6 +70,11 @@ data class BotMemory(
 
 /**
  * A single conversation exchange between a player and bot.
+ *
+ * Remains a [data class] intentionally — all fields are [val], giving stable
+ * equals/hashCode semantics appropriate for this immutable value type.
+ * Contrast with [BotMemory] which is a plain class because its mutable list
+ * field would make data-class equality incorrect.
  */
 data class ConversationEntry(
 	val timestamp: Instant,

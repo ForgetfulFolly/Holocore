@@ -1,3 +1,29 @@
+/***********************************************************************************
+ * Copyright (c) 2024 /// Project SWG /// www.projectswg.com                       *
+ *                                                                                 *
+ * ProjectSWG is the first NGE emulator for Star Wars Galaxies founded on          *
+ * July 7th, 2011 after SOE announced the official shutdown of Star Wars Galaxies. *
+ * Our goal is to create an emulator which will provide a server for players to    *
+ * continue playing a game similar to the one they used to play. We are basing     *
+ * it on the final publish of the game prior to end-game events.                   *
+ *                                                                                 *
+ * This file is part of Holocore.                                                  *
+ *                                                                                 *
+ * --------------------------------------------------------------------------------*
+ *                                                                                 *
+ * Holocore is free software: you can redistribute it and/or modify                *
+ * it under the terms of the GNU Affero General Public License as                  *
+ * published by the Free Software Foundation, either version 3 of the              *
+ * License, or (at your option) any later version.                                 *
+ *                                                                                 *
+ * Holocore is distributed in the hope that it will be useful,                     *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of                  *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                   *
+ * GNU Affero General Public License for more details.                             *
+ *                                                                                 *
+ * You should have received a copy of the GNU Affero General Public License        *
+ * along with Holocore.  If not, see <http://www.gnu.org/licenses/>.               *
+ ***********************************************************************************/
 package com.projectswg.holocore.services.gameplay.bots
 
 import com.projectswg.holocore.services.gameplay.bots.model.BotProfile
@@ -5,7 +31,6 @@ import com.projectswg.holocore.services.gameplay.bots.model.BotSeedData
 import com.projectswg.holocore.services.gameplay.bots.model.BotSimulationTier
 import com.projectswg.holocore.services.gameplay.bots.model.BotState
 import com.projectswg.holocore.services.gameplay.bots.persistence.BotRepository
-import com.projectswg.holocore.services.gameplay.bots.persistence.InMemoryBotRepository
 import me.joshlarson.jlcommon.control.Service
 import me.joshlarson.jlcommon.log.Log
 import java.util.concurrent.ConcurrentHashMap
@@ -17,13 +42,7 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 class BotPopulationService : Service() {
 
-	companion object {
-		@Volatile
-		var instance: BotPopulationService? = null
-			private set
-	}
-
-	private val repository: BotRepository = InMemoryBotRepository()
+	private val repository: BotRepository = BotServiceHub.repository
 	private val profiles = ConcurrentHashMap<String, BotProfile>()
 	private val states = ConcurrentHashMap<String, BotState>()
 	
@@ -37,19 +56,19 @@ class BotPopulationService : Service() {
 	private val spawnedWorldObjects = ConcurrentHashMap<String, Long>()
 
 	override fun start(): Boolean {
-		instance = this
+		BotServiceHub.populationService = this
 		// Set up default zone caps (can be overridden per zone)
 		zoneActiveCaps["tatooine"] = 10
 		zoneActiveCaps.putIfAbsent("default", 5)
 		
 		// Load all bot profiles from persistence
-		val profiles = repository.getAllBotProfiles()
-		profiles.forEach { profile ->
+		val loaded = repository.getAllBotProfiles()
+		loaded.forEach { profile ->
 			registerProfile(profile, BotSimulationTier.DIRECTORY)
 		}
 		
 		// If no bots loaded, initialize seed data for testing
-		if (profiles.isEmpty()) {
+		if (loaded.isEmpty()) {
 			Log.i("No persisted bots found. Loading Phase 1 seed data (50 test bots)...")
 			initializePhase1SeedBots()
 		}
@@ -59,8 +78,8 @@ class BotPopulationService : Service() {
 	}
 
 	override fun stop(): Boolean {
-		if (instance === this) {
-			instance = null
+		if (BotServiceHub.populationService === this) {
+			BotServiceHub.populationService = null
 		}
 		// Save all state back to persistence
 		states.values.forEach { state ->
@@ -101,7 +120,7 @@ class BotPopulationService : Service() {
 	 * Respects per-zone active caps.
 	 */
 	fun promoteToLocal(botId: String, zoneName: String): Boolean {
-		val profile = profiles[botId] ?: return false
+		profiles[botId] ?: return false
 		val state = states[botId] ?: return false
 		
 		if (state.tier != BotSimulationTier.DIRECTORY && state.tier != BotSimulationTier.REGIONAL) {
@@ -123,6 +142,7 @@ class BotPopulationService : Service() {
 		state.planet = zoneName // Update current zone
 		activeCount.incrementAndGet()
 		repository.saveBotState(state)
+		BotServiceHub.telemetryService?.onPromotion()
 		
 		Log.d("Bot %s promoted to LOCAL in zone %s (%d/%d active)", 
 			botId, zoneName, activeCount.get(), activeCap)
@@ -133,7 +153,7 @@ class BotPopulationService : Service() {
 	 * Demote a bot from LOCAL back to DIRECTORY tier (despawn from world).
 	 */
 	fun demoteToBackground(botId: String): Boolean {
-		val profile = profiles[botId] ?: return false
+		profiles[botId] ?: return false
 		val state = states[botId] ?: return false
 		
 		if (state.tier != BotSimulationTier.LOCAL && state.tier != BotSimulationTier.COMPANION) {
@@ -152,6 +172,7 @@ class BotPopulationService : Service() {
 		// Demote the bot
 		state.tier = BotSimulationTier.DIRECTORY
 		repository.saveBotState(state)
+		BotServiceHub.telemetryService?.onDemotion()
 		
 		Log.d("Bot %s demoted to DIRECTORY (was in %s)", botId, zoneName)
 		return true
@@ -222,7 +243,7 @@ class BotPopulationService : Service() {
 	 * Get population statistics.
 	 */
 	fun getStatistics(): PopulationStatistics {
-		val totalByTier = BotSimulationTier.values().associateWith { tier ->
+		val totalByTier = BotSimulationTier.entries.associateWith { tier ->
 			states.values.count { it.tier == tier }
 		}
 		val totalByZone = states.values.groupingBy { it.planet }.eachCount()

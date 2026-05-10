@@ -1,3 +1,29 @@
+/***********************************************************************************
+ * Copyright (c) 2024 /// Project SWG /// www.projectswg.com                       *
+ *                                                                                 *
+ * ProjectSWG is the first NGE emulator for Star Wars Galaxies founded on          *
+ * July 7th, 2011 after SOE announced the official shutdown of Star Wars Galaxies. *
+ * Our goal is to create an emulator which will provide a server for players to    *
+ * continue playing a game similar to the one they used to play. We are basing     *
+ * it on the final publish of the game prior to end-game events.                   *
+ *                                                                                 *
+ * This file is part of Holocore.                                                  *
+ *                                                                                 *
+ * --------------------------------------------------------------------------------*
+ *                                                                                 *
+ * Holocore is free software: you can redistribute it and/or modify                *
+ * it under the terms of the GNU Affero General Public License as                  *
+ * published by the Free Software Foundation, either version 3 of the              *
+ * License, or (at your option) any later version.                                 *
+ *                                                                                 *
+ * Holocore is distributed in the hope that it will be useful,                     *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of                  *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                   *
+ * GNU Affero General Public License for more details.                             *
+ *                                                                                 *
+ * You should have received a copy of the GNU Affero General Public License        *
+ * along with Holocore.  If not, see <http://www.gnu.org/licenses/>.               *
+ ***********************************************************************************/
 package com.projectswg.holocore.services.support.global.admin
 
 import com.projectswg.common.data.CRC
@@ -5,13 +31,13 @@ import com.projectswg.holocore.intents.support.global.chat.SystemMessageIntent
 import com.projectswg.holocore.intents.support.global.command.ExecuteCommandIntent
 import com.projectswg.holocore.resources.support.objects.swg.creature.CreatureObject
 import com.projectswg.holocore.services.gameplay.bots.BotCompanionService
+import com.projectswg.holocore.services.gameplay.bots.BotServiceHub
 import com.projectswg.holocore.services.gameplay.bots.BotDialogueService
 import com.projectswg.holocore.services.gameplay.bots.BotPopulationService
 import com.projectswg.holocore.services.gameplay.bots.BotTelemetryService
 import com.projectswg.holocore.services.gameplay.bots.model.BotSimulationTier
 import me.joshlarson.jlcommon.control.IntentHandler
 import me.joshlarson.jlcommon.control.Service
-import me.joshlarson.jlcommon.log.Log
 
 /**
  * Admin commands for bot management and testing.
@@ -25,9 +51,6 @@ class AdminBotService : Service() {
 	private lateinit var botTelemetryService: BotTelemetryService
 
 	override fun initialize(): Boolean {
-		if (!wireServices()) {
-			Log.w("AdminBotService initialized before bot services were available; commands will be disabled until they start")
-		}
 		return super.initialize()
 	}
 
@@ -65,13 +88,10 @@ class AdminBotService : Service() {
 	private fun handleSpawnBots(admin: CreatureObject, args: List<String>): Boolean {
 		if (args.size < 2) return false
 
-		val count = args[0].toIntOrNull() ?: return false
+		args[0].toIntOrNull() ?: return false
 		val zone = args[1]
 
-		sendMessage(admin, "[BOT] Spawning $count bots in zone '$zone'...")
-
-		// TODO: Actually spawn bots (requires CreatureObject creation)
-		// For now, register them in memory and promote to LOCAL tier
+		sendMessage(admin, "[BOT] World-object spawning not yet implemented. Current zone stats:")
 
 		val stats = botPopulationService.getStatistics()
 		sendMessage(admin, "[BOT] Active bots: ${stats.totalSpawned} / ${botPopulationService.getActiveCap(zone)}")
@@ -149,9 +169,7 @@ class AdminBotService : Service() {
 	 */
 	private fun handleKillBots(admin: CreatureObject): Boolean {
 		val stats = botPopulationService.getStatistics()
-		sendMessage(admin, "[BOT] Despawning ${stats.totalSpawned} active bots...")
-		// TODO: Iterate and despawn all active bots
-		sendMessage(admin, "[BOT] Despawn complete.")
+		sendMessage(admin, "[BOT] World-object despawn not yet implemented. Current spawned count: ${stats.totalSpawned}")
 		return true
 	}
 
@@ -164,9 +182,9 @@ class AdminBotService : Service() {
 		val botId = args[0]
 		val tierIndex = args[1].toIntOrNull() ?: return false
 
-		if (tierIndex < 0 || tierIndex >= BotSimulationTier.values().size) return false
+		if (tierIndex < 0 || tierIndex >= BotSimulationTier.entries.size) return false
 
-		val tier = BotSimulationTier.values()[tierIndex]
+		val tier = BotSimulationTier.entries[tierIndex]
 		val success = botPopulationService.setTier(botId, tier)
 
 		if (success) {
@@ -266,7 +284,14 @@ class AdminBotService : Service() {
 				}
 			}
 			"clear" -> {
-				sendMessage(admin, "[BOT] Memory clearing not yet implemented.")
+				val playerIdArg = args.getOrNull(2)?.toLongOrNull()
+				if (playerIdArg == null) {
+					sendMessage(admin, "[BOT] Usage: /botmemory <bot_id> clear <player_id>")
+				} else {
+					val cleared = botDialogueService.clearPlayerMemory(botId, playerIdArg)
+					if (cleared) sendMessage(admin, "[BOT] Memory cleared for player $playerIdArg / bot $botId")
+					else sendMessage(admin, "[BOT] No memory found for player $playerIdArg / bot $botId")
+				}
 			}
 			else -> return false
 		}
@@ -281,11 +306,27 @@ class AdminBotService : Service() {
 
 		when (subcommand) {
 			"recruit" -> {
-				val role = args.getOrElse(1) { "dps" }
-				// TODO: Actually recruit companion
-				sendMessage(admin, "[BOT] Companion recruitment not yet fully implemented.")
+				sendMessage(admin, "[BOT] Companion wiring requires world-object support (Phase D). Usage: /companion recruit <bot_id>")
 			}
-			else -> return false
+			"release" -> {
+				val botIdArg = args.getOrNull(1)
+				if (botIdArg == null) {
+					sendMessage(admin, "[BOT] Usage: /companion release <bot_id>")
+				} else {
+					val player = admin.owner
+					if (player == null) {
+						sendMessage(admin, "[BOT] Cannot release companion: no active player session.")
+					} else {
+						val released = botCompanionService.releaseCompanion(player, botIdArg)
+						if (released) sendMessage(admin, "[BOT] Companion $botIdArg released.")
+						else sendMessage(admin, "[BOT] No companion $botIdArg is assigned to you.")
+					}
+				}
+			}
+			else -> {
+				sendMessage(admin, "[BOT] Usage: /companion {recruit|release} <bot_id>")
+				return false
+			}
 		}
 		return true
 	}
@@ -296,10 +337,12 @@ class AdminBotService : Service() {
 	}
 
 	private fun wireServices(): Boolean {
-		val population = BotPopulationService.instance ?: return false
-		val dialogue = BotDialogueService.instance ?: return false
-		val companion = BotCompanionService.instance ?: return false
-		val telemetry = BotTelemetryService.instance ?: return false
+		// Short-circuit: already wired and services still live
+		if (::botPopulationService.isInitialized && BotServiceHub.populationService != null) return true
+		val population = BotServiceHub.populationService ?: return false
+		val dialogue = BotServiceHub.dialogueService ?: return false
+		val companion = BotServiceHub.companionService ?: return false
+		val telemetry = BotServiceHub.telemetryService ?: return false
 
 		botPopulationService = population
 		botDialogueService = dialogue
@@ -311,8 +354,8 @@ class AdminBotService : Service() {
 	companion object {
 		private val COMMAND_BOT_SPAWN = CRC.getCrc("spawnbots")
 		private val COMMAND_BOT_INFO = CRC.getCrc("botinfo")
-		private val COMMAND_BOT_TELL = CRC.getCrc("tell")
-		private val COMMAND_BOT_KILL = CRC.getCrc("kill")
+		private val COMMAND_BOT_TELL = CRC.getCrc("bottell")
+		private val COMMAND_BOT_KILL = CRC.getCrc("botkill")
 		private val COMMAND_BOT_TIER = CRC.getCrc("bottier")
 		private val COMMAND_BOT_ACTIVITY = CRC.getCrc("botactivity")
 		private val COMMAND_BOT_TELEMETRY = CRC.getCrc("telemetry")
