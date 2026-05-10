@@ -56,26 +56,28 @@ class AdminBotService : Service() {
 
 	@IntentHandler
 	private fun handleAdminCommand(intent: ExecuteCommandIntent) {
+		val command = intent.command.crc
+		// Ignore commands we don't own — this handler fires for ALL ExecuteCommandIntents
+		if (command !in BOT_COMMANDS) return
 		val admin = intent.source ?: return
 		if (!wireServices()) {
 			sendMessage(admin, "[BOT] Bot services are not available yet.")
 			return
 		}
-		val command = intent.command.crc
 		// Split with limit=6 so the last element may contain spaces (e.g. tell messages)
 		val args = intent.arguments.trim().split("\\s+".toRegex(), limit = 6)
 
 		val handled = when (command) {
-			COMMAND_QATOOL -> handleQaTool(admin, args)
-			COMMAND_BOT_SPAWN -> handleSpawnBots(admin, args)
-			COMMAND_BOT_INFO -> handleBotInfo(admin, args)
-			COMMAND_BOT_TELL -> handleTellBot(admin, args)
-			COMMAND_BOT_KILL -> handleKillBots(admin)
-			COMMAND_BOT_TIER -> handleBotTier(admin, args)
+			COMMAND_QATOOL       -> handleQaTool(admin, args)
+			COMMAND_BOT_SPAWN    -> handleSpawnBots(admin, args)
+			COMMAND_BOT_INFO     -> handleBotInfo(admin, args)
+			COMMAND_BOT_TELL     -> handleTellBot(admin, args)
+			COMMAND_BOT_KILL     -> handleKillBots(admin)
+			COMMAND_BOT_TIER     -> handleBotTier(admin, args)
 			COMMAND_BOT_ACTIVITY -> handleBotActivity(admin, args)
-			COMMAND_BOT_TELEMETRY -> handleTelemetry(admin, args)
-			COMMAND_BOT_MEMORY -> handleBotMemory(admin, args)
-			COMMAND_BOT_COMPANION -> handleCompanion(admin, args)
+			COMMAND_BOT_TELEMETRY-> handleTelemetry(admin, args)
+			COMMAND_BOT_MEMORY   -> handleBotMemory(admin, args)
+			COMMAND_BOT_COMPANION-> handleCompanion(admin, args)
 			else -> false
 		}
 
@@ -440,16 +442,23 @@ class AdminBotService : Service() {
 
 	companion object {
 		/** Primary relay — uses client-known 'qatool' command to avoid client TRE table rejection. */
-		private val COMMAND_QATOOL = CRC.getCrc("qatool")
+		private val COMMAND_QATOOL        = CRC.getCrc("qatool")
 		/** Legacy individual command CRCs — kept for future use if client TREs are patched. */
-		private val COMMAND_BOT_SPAWN = CRC.getCrc("spawnbots")
-		private val COMMAND_BOT_INFO = CRC.getCrc("botinfo")
-		private val COMMAND_BOT_TELL = CRC.getCrc("bottell")
-		private val COMMAND_BOT_KILL = CRC.getCrc("botkill")
-		private val COMMAND_BOT_TIER = CRC.getCrc("bottier")
-		private val COMMAND_BOT_ACTIVITY = CRC.getCrc("botactivity")
+		private val COMMAND_BOT_SPAWN     = CRC.getCrc("spawnbots")
+		private val COMMAND_BOT_INFO      = CRC.getCrc("botinfo")
+		private val COMMAND_BOT_TELL      = CRC.getCrc("bottell")
+		private val COMMAND_BOT_KILL      = CRC.getCrc("botkill")
+		private val COMMAND_BOT_TIER      = CRC.getCrc("bottier")
+		private val COMMAND_BOT_ACTIVITY  = CRC.getCrc("botactivity")
 		private val COMMAND_BOT_TELEMETRY = CRC.getCrc("bottelemetry")
-		private val COMMAND_BOT_MEMORY = CRC.getCrc("botmemory")
+		private val COMMAND_BOT_MEMORY    = CRC.getCrc("botmemory")
 		private val COMMAND_BOT_COMPANION = CRC.getCrc("botcompanion")
+
+		/** Set of all CRCs this service handles — used to ignore unrelated ExecuteCommandIntents. */
+		private val BOT_COMMANDS = setOf(
+			COMMAND_QATOOL, COMMAND_BOT_SPAWN, COMMAND_BOT_INFO, COMMAND_BOT_TELL,
+			COMMAND_BOT_KILL, COMMAND_BOT_TIER, COMMAND_BOT_ACTIVITY, COMMAND_BOT_TELEMETRY,
+			COMMAND_BOT_MEMORY, COMMAND_BOT_COMPANION
+		)
 	}
 }
