@@ -1831,3 +1831,4 @@ crafting_tool_weapon	object/tangible/crafting/station/shared_weapon_tool.iff	ite
 crafting_tool_structure	object/tangible/crafting/station/shared_structure_tool.iff	item	Structure and Furniture Crafting Tool	1	1000	0		0		0	0				0	0	0				0	0						0		0			-1	-1	-1	-1	0	0	0	-
 crafting_tool_space	object/tangible/crafting/station/shared_space_tool.iff	item	Space Crafting Tool	1	1000	0		0		0	0				0	0	0				0	0						0		0			-1	-1	-1	-1	0	0	0	-
 crafting_tool_jedi	object/tangible/crafting/station/shared_jedi_tool.iff	item	Jedi Crafting Tool	1	1000	0		0		0	0				0	0	0				0	0						0		0			-1	-1	-1	-1	0	0	0	-
+item_tcg_deed_at_pt_walker	object/tangible/loot/generic_deed/vehicle_generic.iff	grant	AT-PT Walker Deed	1	1000	0		0		0	0				0	tcg_at_pt_walker						0	0			0		0		1	0		-1	-1	-1	-1	0	0	0	TCG vehicle deed

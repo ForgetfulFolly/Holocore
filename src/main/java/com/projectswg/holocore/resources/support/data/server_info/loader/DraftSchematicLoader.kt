@@ -98,6 +98,7 @@ class DraftSchematicLoader : DataLoader() {
 		setVolume(jsonObject, draftSchematic)
 		setComplexity(jsonObject, draftSchematic)
 		setSlots(jsonObject, draftSchematic)
+		setCategory(jsonObject, draftSchematic)
 
 		return draftSchematic
 	}
@@ -146,6 +147,11 @@ class DraftSchematicLoader : DataLoader() {
 			val amount = (ingredient["count"] as Long).toInt()
 			slot.addSlotDataOption(DraftSlotDataOption(name, resolveIngredientName(ingredientName), ingredientType.slotType, amount))
 		}
+	}
+
+	private fun setCategory(jsonObject: JSONObject, draftSchematic: DraftSchematic) {
+		val cat = jsonObject["category"] as String?
+		if (!cat.isNullOrEmpty()) draftSchematic.category = cat
 	}
 
 	private fun setComplexity(jsonObject: JSONObject, draftSchematic: DraftSchematic) {

@@ -35,6 +35,7 @@ import java.io.IOException
 class VehicleLoader internal constructor() : DataLoader() {
 	private val vehicleTemplates: MutableMap<String, VehicleInfo> = HashMap()
 	private val pcdTemplates: MutableMap<String, VehicleInfo> = HashMap()
+	private val vehicleReferences: MutableMap<String, VehicleInfo> = HashMap()
 
 	fun getVehicleFromIff(vehicleIff: String?): VehicleInfo? {
 		return vehicleTemplates[ClientFactory.formatToSharedFile(vehicleIff)]
@@ -42,6 +43,10 @@ class VehicleLoader internal constructor() : DataLoader() {
 
 	fun getVehicleFromPcdIff(pcdIff: String?): VehicleInfo? {
 		return pcdTemplates[ClientFactory.formatToSharedFile(pcdIff)]
+	}
+
+	fun getVehicleByReference(ref: String): VehicleInfo? {
+		return vehicleReferences[ref]
 	}
 
 	@Throws(IOException::class)
@@ -53,6 +58,7 @@ class VehicleLoader internal constructor() : DataLoader() {
 				assert(!pcdTemplates.containsKey(vehicle.pcdTemplate)) { "vehicle template already exists in map" }
 				vehicleTemplates[ClientFactory.formatToSharedFile(vehicle.objectTemplate)] = vehicle
 				pcdTemplates[ClientFactory.formatToSharedFile(vehicle.pcdTemplate)] = vehicle
+				vehicleReferences[vehicle.objectReference] = vehicle
 			}
 		}
 	}

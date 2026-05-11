@@ -57,9 +57,22 @@ class CraftingSessionService : Service() {
         val clientCrcs = IntArray(size)
         val subcategories = Array(size) { ByteArray(4) }
 
+        val allSchematics = ServerData.draftSchematics.getAllSchematics()
         schematics.keys.forEachIndexed { i, combinedCrc ->
             serverCrcs[i] = (combinedCrc ushr 32).toInt()
             clientCrcs[i] = combinedCrc.toInt()
+            val sc = allSchematics.firstOrNull { it.combinedCrc == combinedCrc }
+            val tab = when (sc?.category) {
+                "CT_armor", "CT_clothing" -> 2
+                "CT_weapon" -> 3
+                "CT_food" -> 4
+                "CT_chemical" -> 5
+                "CT_droid" -> 6
+                "CT_furniture" -> 7
+                "CT_munition" -> 8
+                else -> 1
+            }
+            subcategories[i][0] = tab.toByte()
         }
 
         playerObj.craftingStage = 1
@@ -67,6 +80,7 @@ class CraftingSessionService : Service() {
 
         player.sendPacket(
             MessageQueueDraftSchematics(
+                player.creatureObject.objectId,
                 intent.tool.objectId,
                 0L,
                 size,

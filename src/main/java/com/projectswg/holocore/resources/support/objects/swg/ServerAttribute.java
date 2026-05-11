@@ -41,7 +41,8 @@ public enum ServerAttribute {
 	LINK_OBJECT_ID		("link.object.id",					PredefinedDataType.LONG),
 	ITEM_VALUE			("item.value",						PredefinedDataType.INT),
 	DYNAMIC_ID			("dynamic.id",						PredefinedDataType.STRING),
-	DEED_GEN_TEMPLATE	("deed.generated_template",		PredefinedDataType.STRING);
+	DEED_GEN_TEMPLATE	("deed.generated_template",		PredefinedDataType.STRING),
+	VEHICLE_DEED_REFERENCE	("vehicle.deed.reference",		PredefinedDataType.STRING);
 	
 	private static final EnumLookup<String, ServerAttribute> KEY_LOOKUP = new EnumLookup<>(ServerAttribute.class, ServerAttribute::getKey);
 	

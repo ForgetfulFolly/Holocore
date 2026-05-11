@@ -26,13 +26,51 @@
  */
 package com.projectswg.holocore.resources.support.global.commands.callbacks
 
+import com.projectswg.common.network.packets.swg.zone.object_controller.DraftSlotsQueryResponse
+import com.projectswg.holocore.resources.support.data.server_info.loader.ServerData
 import com.projectswg.holocore.resources.support.global.commands.ICmdCallback
 import com.projectswg.holocore.resources.support.global.player.Player
 import com.projectswg.holocore.resources.support.objects.swg.SWGObject
 
+/**
+ * Handles requestDraftSlots and requestDraftSlotsBatch commands.
+ *
+ * Args format (from client): "serverCrc0 clientCrc0 [serverCrc1 clientCrc1 ...]"
+ * For each pair we look up the schematic (by serverCrc from the player's draftSchematics map)
+ * and send a DraftSlotsQueryResponse containing complexity, volume, canManufacture, and
+ * ingredient slots.  The response is used by the client to populate both the datapad
+ * schematic detail panel and the Phase-1 crafting window list.
+ */
 class RequestDraftSlotsCallback : ICmdCallback {
 	override fun execute(player: Player, target: SWGObject?, args: String) {
-		//DraftSchematic schematic = new DraftSchematic();
-		//player.sendPacket(new DraftSlotsQueryResponse(schematic));
+		val playerObj = player.playerObject ?: return
+		val parts = args.trim().split(Regex("\\s+")).filter { it.isNotEmpty() }
+		if (parts.isEmpty()) return
+
+		val creatureObjectId = player.creatureObject.objectId
+		val allSchematics = ServerData.draftSchematics.getAllSchematics()
+
+		// Process in pairs: serverCrc clientCrc [serverCrc clientCrc ...]
+		// If an odd final token exists it is also tried as a lone serverCrc.
+		var i = 0
+		while (i < parts.size) {
+			val serverCrcArg = parts[i].toIntOrNull()
+			i++
+			// Consume the paired clientCrc token (used only to advance past it;
+			// lookup is by serverCrc since that uniquely identifies the schematic).
+			if (i < parts.size && parts[i].toIntOrNull() != null) i++
+
+			if (serverCrcArg == null) continue
+
+			// Locate this schematic in the player's owned schematics
+			val combinedCrc = playerObj.draftSchematics.keys
+				.firstOrNull { crc -> (crc ushr 32).toInt() == serverCrcArg } ?: continue
+
+			val serverCrc = (combinedCrc ushr 32).toInt()
+			val clientCrc = combinedCrc.toInt()
+
+			val schematic = allSchematics.firstOrNull { it.combinedCrc == combinedCrc } ?: continue
+			player.sendPacket(DraftSlotsQueryResponse(schematic, creatureObjectId, clientCrc, serverCrc))
+		}
 	}
 }

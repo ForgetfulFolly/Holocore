@@ -107,6 +107,7 @@ class PlayerMountService : Service() {
 		val mounts = calledMounts[player] ?: return
 
 		for (m in mounts) {
+			if (player.parent === m.mount) continue  // player is riding this mount; parent is never in aware
 			if (!player.aware.contains(m.mount)) storeMount(player, m.mount, m.petControlDevice)
 		}
 	}
@@ -162,11 +163,14 @@ class PlayerMountService : Service() {
 
 	@IntentHandler
 	private fun handleVehicleDeedGenerate(vdgi: VehicleDeedGenerateIntent) {
-		if (!vdgi.deed.template.startsWith("object/tangible/deed/vehicle_deed/")) {
+		val deed = vdgi.deed
+		val vehicleRef = deed.getServerTextAttribute(ServerAttribute.VEHICLE_DEED_REFERENCE)
+		val isStandardDeed = deed.template.startsWith("object/tangible/deed/vehicle_deed/")
+		if (!isStandardDeed && vehicleRef == null) {
 			broadcastPersonal(vdgi.creature.owner!!, "Invalid vehicle deed!")
 			return
 		}
-		generateVehicle(vdgi.creature, vdgi.deed)
+		generateVehicle(vdgi.creature, deed, vehicleRef)
 	}
 
 	@IntentHandler
@@ -193,14 +197,17 @@ class PlayerMountService : Service() {
 		}
 	}
 
-	private fun generateVehicle(creator: CreatureObject, deed: SWGObject) {
-		val pcdTemplate = pcdForVehicleDeed(deed.template)
-		val vehicleInfo = vehicles().getVehicleFromPcdIff(pcdTemplate)
+	private fun generateVehicle(creator: CreatureObject, deed: SWGObject, vehicleRef: String? = null) {
+		val vehicleInfo = if (vehicleRef != null) {
+			vehicles().getVehicleByReference(vehicleRef)
+		} else {
+			vehicles().getVehicleFromPcdIff(pcdForVehicleDeed(deed.template))
+		}
 		if (vehicleInfo == null) {
 			StandardLog.onPlayerError(this, creator, "Unknown vehicle created from deed: %s", deed.template)
 			return
 		}
-		val vehicleControlDevice = ObjectCreator.createObjectFromTemplate(pcdTemplate) as IntangibleObject
+		val vehicleControlDevice = ObjectCreator.createObjectFromTemplate(vehicleInfo.pcdTemplate) as IntangibleObject
 
 		DestroyObjectIntent(deed).broadcast()
 

@@ -37,6 +37,7 @@ import com.projectswg.holocore.intents.support.objects.ObjectCreatedIntent
 import com.projectswg.holocore.resources.support.global.player.Player
 import com.projectswg.holocore.resources.support.global.zone.sui.SuiListBox
 import com.projectswg.holocore.resources.support.objects.ObjectCreator
+import com.projectswg.holocore.resources.support.objects.StaticItemCreator
 import com.projectswg.holocore.resources.support.objects.radial.RadialHandlerInterface
 import com.projectswg.holocore.resources.support.objects.swg.SWGObject
 import com.projectswg.holocore.services.support.objects.ObjectStorageService
@@ -1074,6 +1075,10 @@ class TerminalCharacterBuilderRadial : RadialHandlerInterface {
 				deed.moveToContainer(player.creatureObject.inventory)
 				ObjectCreatedIntent(deed).broadcast()
 			}
+			// TCG vehicles
+			val tcgVehicle = StaticItemCreator.createItem("item_tcg_deed_at_pt_walker") ?: return
+			tcgVehicle.moveToContainer(player.creatureObject.inventory)
+			ObjectCreatedIntent(tcgVehicle).broadcast()
 		}
 
 		private fun handleTools(player: Player) {

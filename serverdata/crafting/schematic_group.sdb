@@ -1650,4 +1650,8 @@ craftShipwrightMaster	object/draft_schematic/space/chassis/texture_kit_z95_s07.i
 craftShipwrightMaster	object/draft_schematic/space/modification/blacksun_heavy_modification_s01.iff
 craftShipwrightMaster	object/draft_schematic/space/cargo_hold/crg_mining_large.iff
 craftShipwrightMaster	object/draft_schematic/space/cargo_hold/crg_mining_medium.iff
+craftArtisanMasterGroupA	object/draft_schematic/item/item_tumble_blender.iff
+craftArtisanMasterGroupA	object/draft_schematic/item/item_weapon_station.iff
+craftArtisanMasterGroupA	object/draft_schematic/item/item_public_food_station.iff
+craftArtisanMasterGroupA	object/draft_schematic/item/item_public_structure_station.iff
 end	end

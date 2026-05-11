@@ -14,3 +14,4 @@ v35	object/intangible/vehicle/landspeeder_v35_pcd.iff	object/mobile/vehicle/land
 x31	object/intangible/vehicle/landspeeder_x31_pcd.iff	object/mobile/vehicle/landspeeder_x31.iff	15	4	FALSE	0	16	1	154	77	2.9	7.9	7	2	3	4	2.5	45	0.5	0.25
 x34	object/intangible/vehicle/landspeeder_x34_pcd.iff	object/mobile/vehicle/landspeeder_x34.iff	15	4	FALSE	0	17.9	1	154	77	2.9	7.9	7	2	3	4	2.5	45	0.5	0.25
 xp38	object/intangible/vehicle/landspeeder_xp38_pcd.iff	object/mobile/vehicle/landspeeder_xp38.iff	15	4	FALSE	0	17.9	1	154	77	2.9	8.9	7	2	3	4	2.5	45	0.5	0.25
+tcg_at_pt_walker	object/intangible/vehicle/tcg_at_pt_walker_pcd.iff	object/mobile/vehicle/tcg_at_pt_walker.iff	15	4	FALSE	0	14.0	0	120	60	2.0	6.0	6	2	3	4	2.5	45	1.0	0.25

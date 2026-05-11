@@ -200,10 +200,11 @@ object StaticItemCreator {
 		}
 	}
 	
-	@Suppress("UNUSED_PARAMETER")
 	private fun applyAttributes(obj: TangibleObject, info: StaticItemLoader.GrantItemInfo?) {
-//		if (info == null)
-//			return;
+		if (info == null) return
+		if (info.grantVehicle.isNotBlank()) {
+			obj.setServerAttribute(ServerAttribute.VEHICLE_DEED_REFERENCE, info.grantVehicle)
+		}
 	}
 	
 	private fun applyAttributes(obj: TangibleObject, info: StaticItemLoader.GenericItemInfo?) {
