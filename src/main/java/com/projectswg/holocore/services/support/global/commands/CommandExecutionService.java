@@ -116,6 +116,7 @@ public class CommandExecutionService extends Service {
 		registerScriptCallback("cmdMeditate", CmdMeditate::new);
 		registerScriptCallback("cmdTip", CmdTip::new);
 		
+		addCraftingScripts();
 		addAdminScripts();
 		addChatScripts();
 		addCombatScripts();
@@ -129,6 +130,11 @@ public class CommandExecutionService extends Service {
 		addEntertainerScripts();
 	}
 	
+	private void addCraftingScripts() {
+		registerCppCallback("requestCraftingSession", CmdRequestCraftingSession::new);
+		registerCppCallback("cancelCraftingSession", CmdCancelCraftingSession::new);
+	}
+
 	private void addEntertainerScripts() {
 		registerScriptCallback("cmdStartDance", StartDanceCallback::new);
 		registerScriptCallback("cmdChangeDance", ChangeDanceCallback::new);
