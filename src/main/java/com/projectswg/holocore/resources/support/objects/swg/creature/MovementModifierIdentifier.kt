@@ -4,4 +4,5 @@ enum class MovementModifierIdentifier(val id: String) {
 	BASE("base"),
 	SET_SPEED("setSpeed"),
 	BURST_RUN("burstRun"),
+	BUFF("buff"),
 }

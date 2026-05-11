@@ -27,6 +27,7 @@ package com.projectswg.holocore.services.gameplay.combat.buffs
 
 import com.projectswg.common.data.CRC
 import com.projectswg.common.network.packets.swg.zone.PlayClientEffectObjectMessage
+import com.projectswg.common.network.packets.swg.zone.StopClientEffectObjectByLabelMessage
 import com.projectswg.holocore.ProjectSWG
 import com.projectswg.holocore.intents.gameplay.combat.BuffIntent
 import com.projectswg.holocore.intents.gameplay.combat.CreatureKilledIntent
@@ -40,6 +41,7 @@ import com.projectswg.holocore.resources.support.data.server_info.loader.ServerD
 import com.projectswg.holocore.resources.support.global.player.PlayerEvent
 import com.projectswg.holocore.resources.support.objects.swg.creature.Buff
 import com.projectswg.holocore.resources.support.objects.swg.creature.CreatureObject
+import com.projectswg.holocore.resources.support.objects.swg.creature.MovementModifierIdentifier
 import com.projectswg.holocore.utilities.HolocoreCoroutine
 import com.projectswg.holocore.utilities.cancelAndWait
 import kotlinx.coroutines.delay
@@ -170,6 +172,7 @@ class BuffService : Service() {
 
 		checkBuffEffects(buffData, creature, false)
 		checkCallback(buffData, creature)
+		stopParticleEffect(buffData.particle, creature, buffData.name)
 	}
 
 	private fun applyBuff(receiver: CreatureObject, buffer: CreatureObject, buffData: BuffInfo) {
@@ -184,7 +187,7 @@ class BuffService : Service() {
 		receiver.addBuff(buffData.crc, Buff(endTime))
 		checkBuffEffects(buffData, receiver, true)
 
-		sendParticleEffect(buffData.particle, receiver, "")
+		sendParticleEffect(buffData.particle, receiver, buffData.name)
 
 		scheduleBuffExpirationCheck(receiver, buffData)
 	}
@@ -202,9 +205,15 @@ class BuffService : Service() {
 		}
 	}
 
-	private fun sendParticleEffect(effectFileName: String?, receiver: CreatureObject, hardPoint: String) {
+	private fun sendParticleEffect(effectFileName: String?, receiver: CreatureObject, label: String) {
 		if (!effectFileName.isNullOrEmpty()) {
-			receiver.sendObservers(PlayClientEffectObjectMessage(effectFileName, hardPoint, receiver.objectId, ""))
+			receiver.sendObservers(PlayClientEffectObjectMessage(effectFileName, "root", receiver.objectId, label))
+		}
+	}
+
+	private fun stopParticleEffect(effectFileName: String?, receiver: CreatureObject, label: String) {
+		if (!effectFileName.isNullOrEmpty()) {
+			receiver.sendObservers(StopClientEffectObjectByLabelMessage(receiver.objectId, label, false))
 		}
 	}
 
@@ -259,6 +268,7 @@ class BuffService : Service() {
 		
 		if (selectMovementModifier == null) {
 			creature.setMovementPercent(1.0)
+			creature.removeMovementScale(MovementModifierIdentifier.BUFF)
 			return
 		}
 
@@ -273,7 +283,7 @@ class BuffService : Service() {
 				creature.setMovementPercent(1.0 - strength)
 			}
 			MovementLoader.MovementType.BOOST, MovementLoader.MovementType.PERMABOOST -> {
-				creature.setMovementPercent(1.0 + strength)
+				creature.setMovementScale(MovementModifierIdentifier.BUFF, (1.0 + strength).toFloat(), false)
 			}
 		}
 	}

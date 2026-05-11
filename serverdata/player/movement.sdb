@@ -23,6 +23,7 @@ drink_rancoraid	boost	5	TRUE	FALSE	FALSE
 electrolyteDrain	snare	20	TRUE	FALSE	FALSE	
 electrolyteDrain_1	snare	40	TRUE	FALSE	FALSE	
 enfeeble	root	0	TRUE	FALSE	FALSE	
+forceRun	boost	50	TRUE	FALSE	FALSE	
 forceRun_1	boost	100	TRUE	FALSE	FALSE	
 forceRun_2	boost	150	TRUE	FALSE	FALSE	
 forceSuppression	root	0	TRUE	TRUE	TRUE	

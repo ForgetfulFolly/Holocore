@@ -36,6 +36,9 @@ import com.projectswg.holocore.resources.support.objects.swg.tangible.ArmorCateg
 import com.projectswg.holocore.resources.support.objects.swg.tangible.LightsaberPowerCrystalQuality
 import com.projectswg.holocore.resources.support.objects.swg.tangible.Protection
 import com.projectswg.holocore.resources.support.objects.swg.tangible.TangibleObject
+import com.projectswg.holocore.resources.support.objects.swg.weapon.WeaponType
+import com.projectswg.holocore.intents.support.objects.ObjectCreatedIntent
+import com.projectswg.holocore.resources.support.objects.ObjectCreator
 import com.projectswg.holocore.resources.support.objects.swg.weapon.WeaponObject
 
 object StaticItemCreator {
@@ -141,6 +144,18 @@ object StaticItemCreator {
 
 		applySkillMods(obj, info.skillMods)
 		applyItemValue(info.value, obj)
+
+		// Lightsabers need a crystal inventory so players can insert pearls and color crystals
+		// All saber types use _4.iff (5 slots) - the max template available in client TRE files
+		val saberTypes = setOf(WeaponType.ONE_HANDED_SABER, WeaponType.TWO_HANDED_SABER, WeaponType.POLEARM_SABER)
+		if (info.weaponType in saberTypes) {
+			val invTemplate = "object/tangible/inventory/shared_lightsaber_inventory_4.iff"
+			val saberInventory = ObjectCreator.createObjectFromTemplate(invTemplate) as? TangibleObject
+			if (saberInventory != null) {
+				saberInventory.moveToContainer(weapon)
+				ObjectCreatedIntent(saberInventory).broadcast()
+			}
+		}
 	}
 
 	private fun applyAttributes(obj: TangibleObject, info: StaticItemLoader.ConsumableItemInfo?) {

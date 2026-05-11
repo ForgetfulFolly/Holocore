@@ -53,11 +53,11 @@ class CommandLoader internal constructor() : DataLoader() {
 	}
 
 	fun getCommandsByCppCallback(cppCallback: String): List<Command> {
-		return commandCppCallbackMap[cppCallback.lowercase()]!!
+		return commandCppCallbackMap[cppCallback.lowercase()] ?: emptyList()
 	}
 
 	fun getCommandsByScriptCallback(scriptCallback: String): List<Command> {
-		return commandScriptCallbackMap[scriptCallback.lowercase()]!!
+		return commandScriptCallbackMap[scriptCallback.lowercase()] ?: emptyList()
 	}
 
 	fun getCommand(crc: Int): Command? {

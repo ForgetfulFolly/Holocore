@@ -41,6 +41,7 @@ import com.projectswg.holocore.resources.support.objects.swg.custom.AIObject
 import com.projectswg.holocore.resources.support.objects.swg.tangible.ArmorCategory
 import com.projectswg.holocore.resources.support.objects.swg.tangible.TangibleObject
 import com.projectswg.holocore.resources.support.objects.swg.weapon.WeaponObject
+import com.projectswg.holocore.resources.support.global.player.AccessLevel
 import com.projectswg.holocore.services.support.objects.ObjectStorageService.ObjectLookup
 import me.joshlarson.jlcommon.log.Log
 
@@ -104,11 +105,21 @@ class TransferItemCallback : ICmdCallback {
 			if (target is WeaponObject) {
 				val reqSkill: String? = target.requiredSkill
 				val specificSkillIsRequired = reqSkill != null
+				val isDev = actor.owner?.accessLevel == AccessLevel.DEV
 
-				if (specificSkillIsRequired && !actor.hasSkill(reqSkill)) {
-					SystemMessageIntent(player, "@error_message:insufficient_skill").broadcast()
-					player.sendPacket(PlayMusicMessage(0, "sound/ui_dialog_warning.snd", 1, false))
-					return
+				if (specificSkillIsRequired) {
+					if (reqSkill == "dev_only") {
+						// Weapon is restricted to DEV (access level 25) accounts only
+						if (!isDev) {
+							SystemMessageIntent(player, "@error_message:insufficient_skill").broadcast()
+							player.sendPacket(PlayMusicMessage(0, "sound/ui_dialog_warning.snd", 1, false))
+							return
+						}
+					} else if (!actor.hasSkill(reqSkill)) {
+						SystemMessageIntent(player, "@error_message:insufficient_skill").broadcast()
+						player.sendPacket(PlayMusicMessage(0, "sound/ui_dialog_warning.snd", 1, false))
+						return
+					}
 				}
 			}
 

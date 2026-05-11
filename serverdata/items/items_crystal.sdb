@@ -72,3 +72,4 @@ item_power_crystal_04_18	object/tangible/component/weapon/lightsaber/lightsaber_
 item_power_crystal_04_19	object/tangible/component/weapon/lightsaber/lightsaber_module_force_crystal.iff	crystal	Power Crystal	1	1000	0	0	0	6	19	20	-1	31	-1	-1		0	Flawless
 item_power_crystal_04_20	object/tangible/component/weapon/lightsaber/lightsaber_module_force_crystal.iff	crystal	Power Crystal	1	1000	0	0	0	6	20	22	-1	31	-1	-1		0	Ancient
 item_tow_lava_crystal_06_01	object/tangible/component/weapon/lightsaber/lightsaber_module_lava_crystal.iff	crystal	Lava Crystal	1	1000	0	0	1	0	0	0	-1	-1	-1	-1	ELEMENTAL_HEAT	5	ToW expansion
+item_krayt_pearl_04_21	object/tangible/component/weapon/lightsaber/lightsaber_module_krayt_dragon_pearl.iff	crystal	Ancient Flawless Krayt Dragon Pearl	1	1000	0	0	0	6	50	50	-1	0	-1	-1		0	Ancient Flawless
