@@ -42,7 +42,14 @@ class CraftingSessionService : Service() {
     private fun handleRequestCraftingSession(intent: RequestCraftingSessionIntent) {
         val player = intent.player
         val playerObj = player.playerObject ?: return
-        if (playerObj.craftingStage != 0) return
+
+        // If a session is already open (e.g. stuck from a previous crash), reset it
+        // so the player can always open the tool without being permanently locked out.
+        if (playerObj.craftingStage != 0) {
+            sessionSchematics.remove(player.creatureObject.objectId)
+            playerObj.craftingStage = 0
+            playerObj.nearbyCraftStation = 0L
+        }
 
         val schematics = playerObj.draftSchematics
         val size = schematics.size
