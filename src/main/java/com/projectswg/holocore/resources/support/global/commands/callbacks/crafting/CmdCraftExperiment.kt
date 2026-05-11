@@ -1,12 +1,14 @@
 package com.projectswg.holocore.resources.support.global.commands.callbacks.crafting
 
 import com.projectswg.holocore.intents.gameplay.crafting.CraftExperimentIntent
+import com.projectswg.holocore.resources.support.data.server_info.StandardLog
 import com.projectswg.holocore.resources.support.global.commands.ICmdCallback
 import com.projectswg.holocore.resources.support.global.player.Player
 import com.projectswg.holocore.resources.support.objects.swg.SWGObject
 
 class CmdCraftExperiment : ICmdCallback {
     override fun execute(player: Player, target: SWGObject?, args: String) {
+        StandardLog.onPlayerTrace(this, player, "craftExperiment cpp callback fired, args=%s", args)
         val parts = args.trim().split("\\s+".toRegex())
         val actionCounter = parts.getOrNull(0)?.toByte() ?: 0
         val statCount = parts.getOrNull(1)?.toInt() ?: 0
