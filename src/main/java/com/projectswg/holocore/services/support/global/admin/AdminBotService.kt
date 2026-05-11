@@ -299,7 +299,6 @@ class AdminBotService : Service() {
 		}
 
 		state.activity = activity
-		botPopulationService.saveState(botId)
 		sendMessage(admin, "[BOT] Bot $botId activity set to '$activity'")
 		return true
 	}
