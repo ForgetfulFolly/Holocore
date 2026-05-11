@@ -48,6 +48,10 @@ import com.projectswg.holocore.resources.support.global.commands.callbacks.surve
 import com.projectswg.holocore.resources.support.global.commands.callbacks.survey.CmdRequestSurvey;
 import com.projectswg.holocore.resources.support.global.commands.callbacks.crafting.CmdRequestCraftingSession;
 import com.projectswg.holocore.resources.support.global.commands.callbacks.crafting.CmdCancelCraftingSession;
+import com.projectswg.holocore.resources.support.global.commands.callbacks.crafting.CmdCraftExperiment;
+import com.projectswg.holocore.resources.support.global.commands.callbacks.crafting.CmdCreatePrototype;
+import com.projectswg.holocore.resources.support.global.commands.callbacks.crafting.CmdNextCraftingStage;
+import com.projectswg.holocore.resources.support.global.commands.callbacks.crafting.CmdSelectDraftSchematic;
 import me.joshlarson.jlcommon.control.IntentHandler;
 import me.joshlarson.jlcommon.control.Service;
 
@@ -133,6 +137,10 @@ public class CommandExecutionService extends Service {
 	private void addCraftingScripts() {
 		registerCppCallback("requestCraftingSession", CmdRequestCraftingSession::new);
 		registerCppCallback("cancelCraftingSession", CmdCancelCraftingSession::new);
+		registerCppCallback("selectDraftSchematic", CmdSelectDraftSchematic::new);
+		registerCppCallback("nextCraftingStage", CmdNextCraftingStage::new);
+		registerCppCallback("craftExperiment", CmdCraftExperiment::new);
+		registerCppCallback("createPrototype", CmdCreatePrototype::new);
 	}
 
 	private void addEntertainerScripts() {

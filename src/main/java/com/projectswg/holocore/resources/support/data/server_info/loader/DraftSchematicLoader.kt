@@ -50,6 +50,10 @@ class DraftSchematicLoader : DataLoader() {
 		return draftSchematics[draftSchematicIff]
 	}
 
+	/** Returns all loaded draft schematics for CRC-based lookup. */
+	fun getAllSchematics(): Collection<DraftSchematic> = draftSchematics.values
+
+
 	override fun load() {
 		val what = "draft schematics"
 		val start = StandardLog.onStartLoad(what)
