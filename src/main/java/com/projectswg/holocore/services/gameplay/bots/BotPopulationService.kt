@@ -2,7 +2,7 @@
  * Copyright (c) 2024 /// Project SWG /// www.projectswg.com                       *
  *                                                                                 *
  * ProjectSWG is the first NGE emulator for Star Wars Galaxies founded on          *
- * July 7th, 2011 after SOE announced the official shutdown of Star Wars Galaxies. *
+ * July 7th,2011 after SOE announced the official shutdown of Star Wars Galaxies. *
  * Our goal is to create an emulator which will provide a server for players to    *
  * continue playing a game similar to the one they used to play. We are basing     *
  * it on the final publish of the game prior to end-game events.                   *
@@ -275,9 +275,9 @@ class BotPopulationService : Service() {
 
 	companion object {
 		/** Mos Eisley central square (Tatooine) approximate world coordinates. */
-		private const val MOS_EISLEY_X = -3698.0
+		private const val MOS_EISLEY_X = 3525.0
 		private const val MOS_EISLEY_Y = 5.0
-		private const val MOS_EISLEY_Z = 4677.0
+		private const val MOS_EISLEY_Z = -4815.0
 	}
 
 	/**
