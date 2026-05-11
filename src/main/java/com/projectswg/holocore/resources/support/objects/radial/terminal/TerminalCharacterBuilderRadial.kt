@@ -126,6 +126,7 @@ class TerminalCharacterBuilderRadial : RadialHandlerInterface {
 				addListItem("Force Sensitive - Crafting Mastery (Master)")
 				addListItem("Force Sensitive - Enhanced Reflexes Master (Master)")
 				addListItem("Force Sensitive - Heightened Senses Master (Master)")
+				addListItem("Crafting - Artisan (Master)")
 
 				addCallback(SuiEvent.OK_PRESSED, "handleSkillsSelection") { _: SuiEvent, parameters: Map<String, String> -> handleSkillsSelection(player, parameters) }
 				display(player)
@@ -162,6 +163,7 @@ class TerminalCharacterBuilderRadial : RadialHandlerInterface {
 				23 -> handleJedi_9(player)
 				24 -> handleJedi_10(player)
 				25 -> handleJedi_11(player)
+				26 -> handleMasterArtisan(player)
 			}
 		}
 
@@ -302,6 +304,11 @@ class TerminalCharacterBuilderRadial : RadialHandlerInterface {
 			val creatureObject = player.creatureObject
 			GrantSkillIntent(GrantSkillIntent.IntentType.GRANT, "force_sensitive_heightened_senses_novice", creatureObject, true).broadcast()
 			GrantSkillIntent(GrantSkillIntent.IntentType.GRANT, "force_sensitive_heightened_senses_master", creatureObject, true).broadcast()
+		}
+
+		private fun handleMasterArtisan(player: Player) {
+			val creatureObject = player.creatureObject
+			GrantSkillIntent(GrantSkillIntent.IntentType.GRANT, "crafting_artisan_master", creatureObject, true).broadcast()
 		}
 
 		private fun handleSkillsUnlockForceSensitive(player: Player) {
