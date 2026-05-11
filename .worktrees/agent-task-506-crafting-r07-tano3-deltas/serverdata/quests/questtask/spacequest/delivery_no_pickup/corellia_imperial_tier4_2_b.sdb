@@ -1,0 +1,5 @@
+prerequisite_tasks	exclusion_tasks	attach_script	journal_entry_title	journal_entry_description	tasks_on_complete	tasks_on_fail	target	parameter	is_visible	show_system_messages	allow_repeats
+
+			@spacequest/delivery_no_pickup/corellia_imperial_tier4_2_b:quest_location_t	@spacequest/delivery_no_pickup/corellia_imperial_tier4_2_b:quest_location_d					true	false	true
+			@spacequest/delivery_no_pickup/corellia_imperial_tier4_2_b:quest_rendezvous2_t	@spacequest/delivery_no_pickup/corellia_imperial_tier4_2_b:quest_rendezvous2_d					true	false	true
+			@spacequest/delivery_no_pickup/corellia_imperial_tier4_2_b:quest_dock2_t	@spacequest/delivery_no_pickup/corellia_imperial_tier4_2_b:quest_dock2_d					true	false	true

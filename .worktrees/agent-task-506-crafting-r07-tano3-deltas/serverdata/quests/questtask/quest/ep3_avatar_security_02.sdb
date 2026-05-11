@@ -1,0 +1,4 @@
+prerequisite_tasks	exclusion_tasks	attach_script	journal_entry_title	journal_entry_description	tasks_on_complete	tasks_on_fail	task_name	is_visible	show_system_messages	allow_repeats	music_on_activate	target	parameter	grant_quest_on_complete	grant_quest_on_fail	target_server_template	social_group	required_region	loot_item_name	loot_items_required	loot_drop_percent	reward_credits	signal_name
+
+		quest.task.ground.destroy_multi_and_loot			1			true	false	false										1	100	0	
+		quest.task.ground.wait_for_signal					keySecurity02	true	false	false										0	0	0	techhall01_unlocked

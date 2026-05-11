@@ -1,0 +1,31 @@
+{
+	"npcMessage": {
+		"file": "conversation/ep3_clone_relics_boba_fett_yavin_bartender_1",
+		"key": "s_261",
+		"comment": "What can I get you?"
+	},
+	"playerResponses": [
+		{
+			"playerMessage": {
+				"file": "conversation/ep3_clone_relics_boba_fett_yavin_bartender_1",
+				"key": "s_263",
+				"comment": "Nothing right now."
+			}
+		}
+	],
+	"requirements": [],
+	"events": [
+		{
+			"type": "npc_animation",
+			"args": {
+				"animation": "feed_creature_medium"
+			}
+		},
+		{
+			"type": "grant_buff",
+			"args": {
+				"buffs": ["drink_mandalorian_wine", "drink_warrl_surprise"]
+			}
+		}
+	]
+}

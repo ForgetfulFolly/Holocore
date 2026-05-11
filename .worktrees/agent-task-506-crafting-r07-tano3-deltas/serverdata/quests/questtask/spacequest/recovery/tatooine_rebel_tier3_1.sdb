@@ -1,0 +1,6 @@
+prerequisite_tasks	exclusion_tasks	attach_script	journal_entry_title	journal_entry_description	tasks_on_complete	tasks_on_fail	target	parameter	is_visible	show_system_messages	allow_repeats
+
+			@spacequest/recovery/tatooine_rebel_tier3_1:quest_location_t	@spacequest/recovery/tatooine_rebel_tier3_1:quest_location_d					true	false	true
+			@spacequest/recovery/tatooine_rebel_tier3_1:quest_disable_t	@spacequest/recovery/tatooine_rebel_tier3_1:quest_disable_d					true	false	true
+			@spacequest/recovery/tatooine_rebel_tier3_1:quest_recover_t	@spacequest/recovery/tatooine_rebel_tier3_1:quest_recover_d					true	false	true
+			@spacequest/recovery/tatooine_rebel_tier3_1:quest_escort_t	@spacequest/recovery/tatooine_rebel_tier3_1:quest_escort_d					true	false	true

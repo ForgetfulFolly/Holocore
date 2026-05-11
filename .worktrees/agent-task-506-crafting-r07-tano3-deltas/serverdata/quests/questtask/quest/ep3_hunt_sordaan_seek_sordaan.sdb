@@ -1,0 +1,15 @@
+prerequisite_tasks	exclusion_tasks	attach_script	journal_entry_title	journal_entry_description	tasks_on_complete	tasks_on_fail	task_name	is_visible	show_system_messages	allow_repeats	music_on_activate	target	parameter	grant_quest_on_complete	grant_quest_on_fail	create_waypoint	planet_name	location_x	location_y	location_z	waypoint_name	signal_name
+
+		quest.task.ground.nothing			1,4,7,10			false	false	false						false	tatooine	0.0	0.0	0.0		
+		quest.task.ground.wait_for_signal			2		sordaan_zivenSendsYou	false	false	false						false	tatooine	0.0	0.0	0.0		sordaan_zivenSendsYou
+		quest.task.ground.wait_for_signal	@quest/ground/ep3_hunt_sordaan_seek_sordaan:task02_journal_entry_title	@quest/ground/ep3_hunt_sordaan_seek_sordaan:task02_journal_entry_description	3		sordaan_talkToSordaan_04	true	false	false						false	tatooine	0.0	0.0	0.0		sordaan_talkToSordaan
+		quest.task.ground.clear_quest						false	false	false						false	tatooine	0.0	0.0	0.0		
+		quest.task.ground.wait_for_signal			5		sordaan_trippSendsYou	false	false	false						false	tatooine	0.0	0.0	0.0		sordaan_trippSendsYou
+		quest.task.ground.wait_for_signal	@quest/ground/ep3_hunt_sordaan_seek_sordaan:task05_journal_entry_title	@quest/ground/ep3_hunt_sordaan_seek_sordaan:task05_journal_entry_description	6		sordaan_talkToSordaan_03	true	false	false						false	tatooine	0.0	0.0	0.0		sordaan_talkToSordaan
+		quest.task.ground.clear_quest						false	false	false						false	tatooine	0.0	0.0	0.0		
+		quest.task.ground.wait_for_signal			8		sordaan_eharttSendsYou	false	false	false						false	tatooine	0.0	0.0	0.0		sordaan_eharttSendsYou
+		quest.task.ground.wait_for_signal	@quest/ground/ep3_hunt_sordaan_seek_sordaan:task08_journal_entry_title	@quest/ground/ep3_hunt_sordaan_seek_sordaan:task08_journal_entry_description	9		sordaan_talkToSordaan_02	true	false	false						false	tatooine	0.0	0.0	0.0		sordaan_talkToSordaan
+		quest.task.ground.clear_quest						false	false	false						false	tatooine	0.0	0.0	0.0		
+		quest.task.ground.wait_for_signal			11		sordaan_tuwezzSendsYou	false	false	false						false	tatooine	0.0	0.0	0.0		sordaan_tuwezzSendsYou
+		quest.task.ground.wait_for_signal	@quest/ground/ep3_hunt_sordaan_seek_sordaan:task11_journal_entry_title	@quest/ground/ep3_hunt_sordaan_seek_sordaan:task11_journal_entry_description	12		sordaan_talkToSordaan_01	true	false	false						false	tatooine	0.0	0.0	0.0		sordaan_talkToSordaan
+		quest.task.ground.clear_quest						false	false	false						false	tatooine	0.0	0.0	0.0		
