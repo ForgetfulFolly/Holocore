@@ -26,6 +26,7 @@
  ***********************************************************************************/
 package com.projectswg.holocore.services.gameplay.bots
 
+import com.projectswg.holocore.resources.support.data.server_info.loader.ServerData
 import com.projectswg.holocore.services.gameplay.bots.model.BotProfile
 import com.projectswg.holocore.services.gameplay.bots.model.BotSeedData
 import com.projectswg.holocore.services.gameplay.bots.model.BotSimulationTier
@@ -265,7 +266,7 @@ class BotPopulationService : Service() {
 			// Scatter bots in a 200m radius around the Mos Eisley central square
 			val state = states[profile.botId] ?: return@forEach
 			state.x = MOS_EISLEY_X + (random.nextDouble() - 0.5) * 200.0
-			state.y = MOS_EISLEY_Y
+			state.y = 0.0
 			state.z = MOS_EISLEY_Z + (random.nextDouble() - 0.5) * 200.0
 			state.hasLocation = true
 			repository.saveBotState(state)
@@ -275,9 +276,9 @@ class BotPopulationService : Service() {
 
 	companion object {
 		/** Mos Eisley central square (Tatooine) approximate world coordinates. */
-		private const val MOS_EISLEY_X = 3525.0
+		private const val MOS_EISLEY_X = -3698.0
 		private const val MOS_EISLEY_Y = 5.0
-		private const val MOS_EISLEY_Z = -4815.0
+		private const val MOS_EISLEY_Z = 4677.0
 	}
 
 	/**

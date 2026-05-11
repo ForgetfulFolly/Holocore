@@ -2,7 +2,7 @@
  * Copyright (c) 2024 /// Project SWG /// www.projectswg.com                       *
  *                                                                                 *
  * ProjectSWG is the first NGE emulator for Star Wars Galaxies founded on          *
- * July 7th, 2011 after SOE announced the official shutdown of Star Wars Galaxies. *
+ * July 7th,2011 after SOE announced the official shutdown of Star Wars Galaxies. *
  * Our goal is to create an emulator which will provide a server for players to    *
  * continue playing a game similar to the one they used to play. We are basing     *
  * it on the final publish of the game prior to end-game events.                   *
@@ -143,10 +143,13 @@ class BotWorldSpawnService : Service() {
 			return null
 		}
 
+		val terrainY = ServerData.terrains.getHeight(terrain, state.x, state.z)
+		val y = if (state.y == 0.0 || state.y == 5.0) terrainY else state.y
+
 		val location = Location.builder()
 			.setTerrain(terrain)
 			.setX(state.x)
-			.setY(state.y)
+			.setY(y)
 			.setZ(state.z)
 			.setHeading(state.heading)
 			.build()
