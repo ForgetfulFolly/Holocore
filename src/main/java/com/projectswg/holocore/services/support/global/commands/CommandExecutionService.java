@@ -46,6 +46,8 @@ import com.projectswg.holocore.resources.support.global.commands.callbacks.loot.
 import com.projectswg.holocore.resources.support.global.commands.callbacks.quest.*;
 import com.projectswg.holocore.resources.support.global.commands.callbacks.survey.CmdRequestCoreSample;
 import com.projectswg.holocore.resources.support.global.commands.callbacks.survey.CmdRequestSurvey;
+import com.projectswg.holocore.resources.support.global.commands.callbacks.crafting.CmdRequestCraftingSession;
+import com.projectswg.holocore.resources.support.global.commands.callbacks.crafting.CmdCancelCraftingSession;
 import me.joshlarson.jlcommon.control.IntentHandler;
 import me.joshlarson.jlcommon.control.Service;
 
