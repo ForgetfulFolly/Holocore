@@ -32,6 +32,7 @@ import com.projectswg.common.network.packets.swg.zone.FactionResponseMessage
 import com.projectswg.holocore.intents.support.global.command.ExecuteCommandIntent
 import com.projectswg.holocore.resources.support.objects.swg.creature.CreatureObject
 import com.projectswg.holocore.resources.support.objects.swg.player.PlayerObject
+import com.projectswg.holocore.resources.support.global.player.AccessLevel
 import me.joshlarson.jlcommon.control.IntentHandler
 import me.joshlarson.jlcommon.control.Service
 
@@ -50,7 +51,7 @@ class PlayerCharacterSheetService : Service() {
 	private fun sendCharacterSheetResponseMessage(creature: CreatureObject, player: PlayerObject) {
 		creature.sendSelf(
 			CharacterSheetResponseMessage(
-				lotsUsed = player.lotsAvailable - player.lotsUsed, factionCrc = creature.pvpFaction.crc, factionStatus = creature.pvpStatus.value
+				lotsUsed = if (creature.owner?.accessLevel == AccessLevel.DEV) 9999 else player.lotsAvailable - player.lotsUsed, factionCrc = creature.pvpFaction.crc, factionStatus = creature.pvpStatus.value
 			)
 		)
 	}

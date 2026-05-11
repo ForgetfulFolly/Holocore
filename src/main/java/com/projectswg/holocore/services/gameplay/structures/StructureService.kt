@@ -34,6 +34,7 @@ import com.projectswg.holocore.intents.gameplay.structures.UseStructureDeedInten
 import com.projectswg.holocore.intents.support.global.chat.SystemMessageIntent
 import com.projectswg.holocore.intents.support.objects.DestroyObjectIntent
 import com.projectswg.holocore.intents.support.objects.ObjectCreatedIntent
+import com.projectswg.holocore.resources.support.global.player.AccessLevel
 import com.projectswg.holocore.resources.support.data.server_info.StandardLog
 import com.projectswg.holocore.resources.support.data.server_info.loader.ServerData
 import com.projectswg.holocore.resources.support.data.server_info.mongodb.PswgDatabase.config
@@ -72,7 +73,7 @@ class StructureService : Service() {
 		val owner = playerStructureInfo.owner ?: return
 		val structureInfo = ServerData.housing.getStructureInfo(building.template) ?: return
 		
-		owner.playerObject.lotsUsed += structureInfo.lotsNeeded
+		if (owner.owner?.accessLevel != AccessLevel.DEV) owner.playerObject.lotsUsed += structureInfo.lotsNeeded
 		StandardLog.onPlayerTrace(this, owner, "registered as owner for structure %s", building)
 	}
 	

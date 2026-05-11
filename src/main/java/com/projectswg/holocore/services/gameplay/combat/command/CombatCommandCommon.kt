@@ -156,7 +156,7 @@ object CombatCommandCommon {
 		val triggerEffect = command.triggerEffect
 		if (triggerEffect.isNotEmpty()) {
 			val triggerEffectHardpoint = command.triggerEffectHardpoint
-			source.sendObservers(PlayClientEffectObjectMessage(triggerEffect, triggerEffectHardpoint, source.objectId, ""))
+			source.sendObservers(PlayClientEffectObjectMessage(triggerEffect, triggerEffectHardpoint, source.objectId, command.name))
 		}
 	}
 
