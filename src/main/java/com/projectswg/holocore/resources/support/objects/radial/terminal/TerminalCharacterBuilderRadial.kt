@@ -41,6 +41,10 @@ import com.projectswg.holocore.resources.support.objects.radial.RadialHandlerInt
 import com.projectswg.holocore.resources.support.objects.swg.SWGObject
 import com.projectswg.holocore.services.support.objects.ObjectStorageService
 import com.projectswg.holocore.services.support.objects.items.StaticItemService.SystemMessageHandler
+import com.projectswg.holocore.intents.support.global.chat.SystemMessageIntent
+import com.projectswg.holocore.resources.gameplay.crafting.resource.galactic.storage.GalacticResourceContainer
+import com.projectswg.holocore.services.gameplay.crafting.resource.ResourceContainerEventHandler
+import com.projectswg.holocore.services.gameplay.crafting.resource.ResourceContainerHelper
 
 class TerminalCharacterBuilderRadial : RadialHandlerInterface {
 	override fun getOptions(options: MutableCollection<RadialOption>, player: Player, target: SWGObject) {
@@ -62,6 +66,8 @@ class TerminalCharacterBuilderRadial : RadialHandlerInterface {
 				addListItem("ITEMS - Wearables")
 				addListItem("ITEMS - Vehicles")
 				addListItem("ITEMS - Tools")
+				addListItem("ITEMS - Crafting Tools")
+				addListItem("ITEMS - Resources")
 				addListItem("Credits")
 
 				addCallback(SuiEvent.OK_PRESSED, "handleCategorySelection") { _: SuiEvent, parameters: Map<String, String> -> handleCategorySelection(player, parameters) }
@@ -83,7 +89,9 @@ class TerminalCharacterBuilderRadial : RadialHandlerInterface {
 				5 -> handleWearables(player)
 				6 -> handleVehicles(player)
 				7 -> handleTools(player)
-				8 -> handleCredits(player)
+				8 -> handleCraftingTools(player)
+				9 -> handleResources(player)
+				10 -> handleCredits(player)
 			}
 		}
 
@@ -1126,5 +1134,60 @@ class TerminalCharacterBuilderRadial : RadialHandlerInterface {
 				player, "survey_tool_wind"
 			)
 		}
+		private fun handleCraftingTools(player: Player) {
+			SuiListBox().run {
+				title = "Character Builder Terminal"
+				prompt = "Select a crafting tool to acquire."
+
+				addListItem("Generic Crafting Tool")
+				addListItem("Food and Beverage Crafting Tool")
+				addListItem("Clothing and Armor Crafting Tool")
+				addListItem("Weapon Crafting Tool")
+				addListItem("Structure and Furniture Crafting Tool")
+				addListItem("Space Crafting Tool")
+				addListItem("Jedi Crafting Tool")
+
+				addCallback(SuiEvent.OK_PRESSED, "handleCraftingToolsSelection") { _: SuiEvent, parameters: Map<String, String> -> handleCraftingToolsSelection(player, parameters) }
+				display(player)
+			}
+		}
+
+		private fun handleCraftingToolsSelection(player: Player, parameters: Map<String, String>) {
+			val selection = SuiListBox.getSelectedRow(parameters)
+
+			when (selection) {
+				0 -> spawnItems(player, "crafting_tool_generic")
+				1 -> spawnItems(player, "crafting_tool_food")
+				2 -> spawnItems(player, "crafting_tool_clothing")
+				3 -> spawnItems(player, "crafting_tool_weapon")
+				4 -> spawnItems(player, "crafting_tool_structure")
+				5 -> spawnItems(player, "crafting_tool_space")
+				6 -> spawnItems(player, "crafting_tool_jedi")
+			}
+		}
+
+		private fun handleResources(player: Player) {
+			val creature = player.creatureObject
+			val terrain = creature.worldLocation.terrain
+			val spawnedResources = GalacticResourceContainer.getSpawnedResources(terrain)
+
+			if (spawnedResources.isEmpty()) {
+				SystemMessageIntent.broadcastPersonal(player, "No resources are currently spawned on this planet.")
+				return
+			}
+
+			val noopHandler = object : ResourceContainerEventHandler {
+				override fun onUnknownError() {}
+				override fun onInventoryFull() {}
+				override fun onSuccess() {}
+			}
+
+			for (resource in spawnedResources) {
+				ResourceContainerHelper.giveResourcesToPlayer(50000, resource, player, noopHandler)
+			}
+
+			SystemMessageIntent.broadcastPersonal(player, "Received ${spawnedResources.size} resource types (50,000 units each) from ${terrain.nameCapitalized}.")
+		}
+
 	}
 }

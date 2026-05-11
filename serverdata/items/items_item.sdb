@@ -1824,3 +1824,10 @@ throw_pillow_schematic	object/tangible/loot/loot_schematic/throwpillow_schematic
 trandoshan_hunter_rifle_schematic	object/tangible/loot/loot_schematic/trandoshan_hunter_rifle_schematic.iff	schematic	Trandoshan Hunter's Rifle Schematic	1	1000	0		0		0	0				0						object/draft_schematic/weapon/appearance/weapon_appearance_rifle_trando_hunter_crafted.iff	0	1	class_munitions_phase4_master				1		0	0		-1	-1	-1	-1	0	0	0	-
 tumble_blender_schematic	object/tangible/loot/loot_schematic/tumble_blender_schematic.iff	schematic	Tumble Blender	1	1000	0		0		0	0				0						object/draft_schematic/item/item_tumble_blender.iff	0	1	class_engineering_phase1_02				1		0	0		-1	-1	-1	-1	0	0	0	-
 utensils_schematic	object/tangible/loot/loot_schematic/utensils_schematic.iff	schematic	Kitchen Utensils Draft Schematic	1	1000	0		0		0	0				0						object/draft_schematic/furniture/furniture_utensils.iff	0	1	class_domestics_phase1_novice				1		0	0		-1	-1	-1	-1	0	0	0	-
+crafting_tool_generic	object/tangible/crafting/station/shared_generic_tool.iff	item	Generic Crafting Tool	1	1000	0		0		0	0				0	0	0				0	0						0		0			-1	-1	-1	-1	0	0	0	-
+crafting_tool_food	object/tangible/crafting/station/shared_food_tool.iff	item	Food and Beverage Crafting Tool	1	1000	0		0		0	0				0	0	0				0	0						0		0			-1	-1	-1	-1	0	0	0	-
+crafting_tool_clothing	object/tangible/crafting/station/shared_clothing_tool.iff	item	Clothing and Armor Crafting Tool	1	1000	0		0		0	0				0	0	0				0	0						0		0			-1	-1	-1	-1	0	0	0	-
+crafting_tool_weapon	object/tangible/crafting/station/shared_weapon_tool.iff	item	Weapon Crafting Tool	1	1000	0		0		0	0				0	0	0				0	0						0		0			-1	-1	-1	-1	0	0	0	-
+crafting_tool_structure	object/tangible/crafting/station/shared_structure_tool.iff	item	Structure and Furniture Crafting Tool	1	1000	0		0		0	0				0	0	0				0	0						0		0			-1	-1	-1	-1	0	0	0	-
+crafting_tool_space	object/tangible/crafting/station/shared_space_tool.iff	item	Space Crafting Tool	1	1000	0		0		0	0				0	0	0				0	0						0		0			-1	-1	-1	-1	0	0	0	-
+crafting_tool_jedi	object/tangible/crafting/station/shared_jedi_tool.iff	item	Jedi Crafting Tool	1	1000	0		0		0	0				0	0	0				0	0						0		0			-1	-1	-1	-1	0	0	0	-
