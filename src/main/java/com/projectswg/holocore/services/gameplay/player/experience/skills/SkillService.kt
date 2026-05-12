@@ -289,13 +289,15 @@ class SkillService : Service() {
 		target.playerObject.revokeDraftSchematic(serverCrc, clientCrc)
 	}
 
-	private fun getDraftSchematicServerCrc(schematicInGroupShared: String): Int {
-		return CRC.getCrc(schematicInGroupShared)
+	// CU packet field 1: CRC of server template path (filename has NO shared_ prefix)
+	private fun getDraftSchematicServerCrc(sharedPath: String): Int {
+		val serverPath = sharedPath.replace("/shared_", "/")
+		return CRC.getCrc(serverPath)
 	}
 
-	private fun getDraftSchematicClientCrc(schematicInGroupShared: String): Int {
-		val templateWithoutPrefix = schematicInGroupShared.replace("object/draft_schematic/", "")
-		return CRC.getCrc(templateWithoutPrefix)
+	// CU packet field 2: CRC of shared template path (filename WITH shared_ prefix)
+	private fun getDraftSchematicClientCrc(sharedPath: String): Int {
+		return CRC.getCrc(sharedPath)
 	}
 
 

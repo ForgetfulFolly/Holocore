@@ -37,23 +37,43 @@ import java.util.stream.Collectors
 class StructureInfoLoader : DataLoader() {
 	
 	private var structureInfo: Map<String, StructureInfo> = HashMap()
-	
+	private var structureInfoByDeed: Map<String, StructureInfo> = HashMap()
+
 	val structures: Map<String, StructureInfo>
 		get() = Collections.unmodifiableMap(structureInfo)
-	
+
 	fun getStructureInfo(structureTemplate: String): StructureInfo? {
 		return structureInfo[structureTemplate]
 	}
-	
+
+	/**
+	 * Reverse lookup: given a deed item template, return the StructureInfo it would generate.
+	 * Used by StructureService to auto-initialize the DEED_GEN_TEMPLATE attribute on newly
+	 * created deed objects so they are usable for structure placement without a crafting flow.
+	 */
+	fun getStructureInfoByDeed(deedTemplate: String): StructureInfo? {
+		return structureInfoByDeed[deedTemplate]
+	}
+
 	@Throws(IOException::class)
 	override fun load() {
 		SdbLoader.load(File("serverdata/structures/structure_info.sdb")).use { set ->
 			structureInfo = set.stream { StructureInfo(it) }.collect(Collectors.toMap({ it.structureTemplate }, { it }))
 		}
+		// Build reverse deed -> structure map. Skip rows with empty deed templates (e.g. GCW HQs).
+		// On duplicate deed templates, keep the first encountered structure (sorted for determinism)
+		// since some entries in the data file map a single deed to multiple variants.
+		val reverse = HashMap<String, StructureInfo>()
+		structureInfo.values
+			.asSequence()
+			.filter { it.deedTemplate.isNotEmpty() }
+			.sortedBy { it.structureTemplate }
+			.forEach { info -> reverse.putIfAbsent(info.deedTemplate, info) }
+		structureInfoByDeed = reverse
 	}
-	
+
 	class StructureInfo(set: SdbResultSet) {
-		
+
 		val structureTemplate = set.getText("structure")
 		val deedTemplate = set.getText("deed")
 		val constructionTemplate = set.getText("construction_template")

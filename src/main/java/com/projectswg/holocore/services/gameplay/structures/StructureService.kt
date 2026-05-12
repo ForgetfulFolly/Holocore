@@ -34,7 +34,6 @@ import com.projectswg.holocore.intents.gameplay.structures.UseStructureDeedInten
 import com.projectswg.holocore.intents.support.global.chat.SystemMessageIntent
 import com.projectswg.holocore.intents.support.objects.DestroyObjectIntent
 import com.projectswg.holocore.intents.support.objects.ObjectCreatedIntent
-import com.projectswg.holocore.resources.support.global.player.AccessLevel
 import com.projectswg.holocore.resources.support.data.server_info.StandardLog
 import com.projectswg.holocore.resources.support.data.server_info.loader.ServerData
 import com.projectswg.holocore.resources.support.data.server_info.mongodb.PswgDatabase.config
@@ -68,13 +67,32 @@ class StructureService : Service() {
 	
 	@IntentHandler
 	private fun handleObjectCreatedIntent(oci: ObjectCreatedIntent) {
-		val building = oci.obj as? BuildingObject ?: return
+		when (val obj = oci.obj) {
+			is BuildingObject -> handleBuildingCreated(obj)
+			is TangibleObject -> initializeDeedAttributes(obj)
+			else -> {}
+		}
+	}
+	
+	private fun handleBuildingCreated(building: BuildingObject) {
 		val playerStructureInfo = building.playerStructureInfo ?: return
 		val owner = playerStructureInfo.owner ?: return
 		val structureInfo = ServerData.housing.getStructureInfo(building.template) ?: return
 		
-		if (owner.owner?.accessLevel != AccessLevel.DEV) owner.playerObject.lotsUsed += structureInfo.lotsNeeded
+		owner.playerObject.lotsUsed += structureInfo.lotsNeeded
 		StandardLog.onPlayerTrace(this, owner, "registered as owner for structure %s", building)
+	}
+	
+	/**
+	 * Auto-set DEED_GEN_TEMPLATE on newly created deed items so they can be used for
+	 * structure placement. In retail this attribute was set by the crafting flow; until
+	 * a real CraftingService exists, we initialize it here from the structure_info.sdb
+	 * reverse map so deeds granted via admin commands or items can be placed.
+	 */
+	private fun initializeDeedAttributes(deed: TangibleObject) {
+		if (deed.getServerTextAttribute(ServerAttribute.DEED_GEN_TEMPLATE) != null) return
+		val structureInfo = ServerData.housing.getStructureInfoByDeed(deed.template) ?: return
+		deed.setServerAttribute(ServerAttribute.DEED_GEN_TEMPLATE, structureInfo.structureTemplate)
 	}
 	
 	@IntentHandler

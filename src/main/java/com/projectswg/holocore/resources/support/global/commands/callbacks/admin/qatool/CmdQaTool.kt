@@ -58,6 +58,7 @@ class CmdQaTool : ICmdCallback {
 			"recover"      -> recoverPlayer(player, args.substring(args.indexOf(' ') + 1))
 			"setinstance"  -> setInstance(player, args.substring(args.indexOf(' ') + 1))
 			"details"      -> QaToolDetails.sendDetails(player, target, args)
+			"deed"         -> QaToolStructureDeed.createDeed(player, args.substring(args.indexOf(' ') + 1))
 			// Bot relay subcommands — handled by AdminBotService, suppress SUI popup
 			"bot", "spawn", "info", "kill", "tier", "tell", "activity", "telemetry", "memory", "companion", "stats" -> { /* delegated */ }
 			else           -> createPrimaryWindow(player)

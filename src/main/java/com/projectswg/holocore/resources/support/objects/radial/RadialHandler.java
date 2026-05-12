@@ -126,6 +126,10 @@ public enum RadialHandler {
 		registerHandler("object/tangible/travel/ticket_collector/shared_ticket_collector.iff", new TerminalTicketCollectorRadial());
 		registerHandler("object/tangible/travel/travel_ticket/base/shared_base_travel_ticket.iff", new TerminalTicketRadial());
 		registerHandler("object/tangible/terminal/shared_terminal_character_builder.iff", new TerminalCharacterBuilderRadial());
+		TerminalPlayerStructureRadial structureTerminal = new TerminalPlayerStructureRadial();
+		registerHandler("object/tangible/terminal/shared_terminal_player_structure.iff", structureTerminal);
+		registerHandler("object/tangible/terminal/shared_terminal_player_structure_nosnap.iff", structureTerminal);
+		registerHandler("object/tangible/terminal/shared_terminal_player_structure_nosnap_mini.iff", structureTerminal);
 	}
 	
 	private void initializeSurveyRadials() {
