@@ -103,6 +103,8 @@ class CraftingSessionService : Service() {
             sent, playerObj.draftSchematics.size, player.username, toolId, toolMask
         )
         player.sendPacket(packet)
+        // CS_selectDraftSchematic = 1 — tells the client to open the schematic selection window
+        playerObj.craftingStage = 1
     }
 
     // ------------------------------------------------------------------
@@ -296,6 +298,7 @@ class CraftingSessionService : Service() {
 
     @IntentHandler
     private fun handleCancelCraftingSession(intent: CancelCraftingSessionIntent) {
+        intent.player.playerObject?.craftingStage = 0
         tearDownSession(intent.player.creatureObject.objectId)
     }
 
@@ -366,6 +369,7 @@ class CraftingSessionService : Service() {
         )
 
         // Tear down session and notify client
+        player.playerObject?.craftingStage = 0
         tearDownSession(creatureId)
         player.sendPacket(CraftingSessionEnded(creatureId, 0, 1.toByte()))
     }
