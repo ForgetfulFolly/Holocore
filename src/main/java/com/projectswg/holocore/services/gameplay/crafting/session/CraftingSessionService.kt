@@ -13,8 +13,11 @@ package com.projectswg.holocore.services.gameplay.crafting.session
 import com.projectswg.common.data.crafting.CraftingResult
 import com.projectswg.common.data.crafting.CraftingType
 import com.projectswg.common.network.packets.swg.zone.object_controller.CraftAcknowledge
+import com.projectswg.common.network.packets.swg.zone.object_controller.CraftExperimentationResponse
+import com.projectswg.common.network.packets.swg.zone.object_controller.CraftingSessionEnded
 import com.projectswg.common.network.packets.swg.zone.object_controller.DraftSlotsQueryResponse
 import com.projectswg.common.network.packets.swg.zone.object_controller.MessageQueueCraftEmptySlot
+import com.projectswg.common.network.packets.swg.zone.object_controller.MessageQueueCraftExperiment
 import com.projectswg.common.network.packets.swg.zone.object_controller.MessageQueueCraftFillSlot
 import com.projectswg.common.network.packets.swg.zone.object_controller.MessageQueueDraftSchematics
 import com.projectswg.holocore.intents.gameplay.crafting.CancelCraftingSessionIntent
@@ -23,8 +26,10 @@ import com.projectswg.holocore.intents.gameplay.crafting.CreatePrototypeIntent
 import com.projectswg.holocore.intents.gameplay.crafting.NextCraftingStageIntent
 import com.projectswg.holocore.intents.gameplay.crafting.RequestCraftingSessionIntent
 import com.projectswg.holocore.intents.gameplay.crafting.SelectDraftSchematicIntent
+import com.projectswg.holocore.intents.gameplay.player.experience.ExperienceIntent
 import com.projectswg.holocore.intents.support.global.network.InboundPacketIntent
 import com.projectswg.holocore.intents.support.global.zone.PlayerEventIntent
+import com.projectswg.holocore.intents.support.objects.ObjectCreatedIntent
 import com.projectswg.holocore.resources.support.data.server_info.loader.ServerData
 import com.projectswg.holocore.resources.support.global.player.Player
 import com.projectswg.holocore.resources.support.global.player.PlayerEvent
@@ -57,6 +62,7 @@ class CraftingSessionService : Service() {
         const val ACK_FILL_SLOT  = 0   // ingredient placed into slot
         const val ACK_EMPTY_SLOT = 1   // slot cleared
         const val ACK_ASSEMBLY   = 2   // nextCraftingStage result (assembly done)
+        const val ACK_EXPERIMENT = 3   // experimentation result
         const val ACK_SUCCESS    = 0   // no error (errorId)
 
         /** MSCO IFF template — the default manufacture schematic intangible object */
@@ -165,6 +171,7 @@ class CraftingSessionService : Service() {
         when (val packet = intent.packet) {
             is MessageQueueCraftFillSlot  -> handleCraftFillSlot(player, packet)
             is MessageQueueCraftEmptySlot -> handleCraftEmptySlot(player, packet)
+            is MessageQueueCraftExperiment -> handleCraftExperimentPacket(player, packet)
         }
     }
 
@@ -191,6 +198,45 @@ class CraftingSessionService : Service() {
 
         player.sendPacket(CraftAcknowledge(ACK_EMPTY_SLOT, ACK_SUCCESS, session.sequenceId.toByte()))
         Log.d("[crafting] %s emptied slot %d", player.username, packet.slot)
+    }
+
+    private fun handleCraftExperimentPacket(player: Player, packet: MessageQueueCraftExperiment) {
+        val creatureId = player.creatureObject.objectId
+        val session = activeSessions[creatureId] ?: run {
+            Log.w("[crafting] CraftExperiment from %s with no active session", player.username)
+            return
+        }
+        val playerObj = player.playerObject ?: return
+
+        val totalSpent = packet.spentPoints.sum()
+        if (totalSpent <= 0) return
+
+        // Deduct experimentation points (floor at 0)
+        playerObj.experimentPoints = (playerObj.experimentPoints - totalSpent).coerceAtLeast(0)
+
+        // Roll: d100 + 10 per point spent + assembly quality bonus
+        val assemblyBonus = when (session.assemblyResult) {
+            CraftingResult.CRITICAL_SUCCESS -> 30
+            CraftingResult.GREAT_SUCCESS    -> 20
+            CraftingResult.GOOD_SUCCESS     -> 10
+            CraftingResult.MODERATE_SUCCESS -> 5
+            else                            -> 0
+        }
+        val roll = Random.nextInt(100) + totalSpent * 10 + assemblyBonus
+
+        // stringId per NGE experimentation feedback strings: 1=great, 2=success, 3=moderate, 4=failure
+        val stringId = when {
+            roll >= 100 -> 1  // great success
+            roll >= 70  -> 2  // success
+            roll >= 40  -> 3  // moderate
+            else        -> 4  // failure
+        }
+
+        player.sendPacket(CraftExperimentationResponse(0, stringId, packet.actionCounter))
+        Log.d(
+            "[crafting] %s experimented: spent=%d roll=%d → stringId=%d (expPts remaining=%d)",
+            player.username, totalSpent, roll, stringId, playerObj.experimentPoints
+        )
     }
 
     // ------------------------------------------------------------------
@@ -271,21 +317,57 @@ class CraftingSessionService : Service() {
     }
 
     // ------------------------------------------------------------------
-    // Phase F stub — experimentation
+    // Phase F — experimentation intent handler
+    // (Routed primarily via MessageQueueCraftExperiment ObjController in handleInboundPacketIntent)
     // ------------------------------------------------------------------
 
     @IntentHandler
     private fun handleCraftExperiment(intent: CraftExperimentIntent) {
-        // Phase F: allocate experimentation points → attribute deltas + CraftAcknowledge(ACK_EXPERIMENT, ...)
+        // No-op: experiment packets arrive as ObjController 0x0106, handled in handleCraftExperimentPacket.
+        // This handler remains for forward-compat if craftExperiment is ever added to commands_global.sdb.
     }
 
     // ------------------------------------------------------------------
-    // Phase G stub — prototype creation
+    // Phase G — prototype creation
     // ------------------------------------------------------------------
 
     @IntentHandler
     private fun handleCreatePrototype(intent: CreatePrototypeIntent) {
-        // Phase G: create the actual item, transfer to inventory, grant XP
+        val player = intent.player
+        val creatureId = player.creatureObject.objectId
+        val session = activeSessions[creatureId] ?: run {
+            Log.w("[crafting] CreatePrototype from %s with no active session", player.username)
+            return
+        }
+
+        val templatePath = session.schematic.craftedSharedTemplate
+        if (templatePath.isNullOrEmpty()) {
+            Log.e("[crafting] Schematic 0x%X has no craftedSharedTemplate", session.schematic.serverCrc)
+            return
+        }
+
+        // Create the crafted item
+        val item = ObjectCreator.createObjectFromTemplate(templatePath)
+        val inventory = player.creatureObject.getSlottedObject("inventory")
+        if (inventory != null) {
+            item.moveToContainer(inventory)
+        } else {
+            Log.w("[crafting] No inventory slot for %s, item %d unparented", player.username, item.objectId)
+        }
+        ObjectCreatedIntent(item).broadcast()
+
+        // Grant crafting XP: 5 XP per complexity point, minimum 10
+        val xpAmount = (session.schematic.complexity * 5).coerceAtLeast(10)
+        ExperienceIntent(player.creatureObject, "crafting_general", xpAmount).broadcast()
+
+        Log.d(
+            "[crafting] %s created prototype of %s (xp=%d)",
+            player.username, templatePath, xpAmount
+        )
+
+        // Tear down session and notify client
+        tearDownSession(creatureId)
+        player.sendPacket(CraftingSessionEnded(creatureId, 0, 1.toByte()))
     }
 
     // ------------------------------------------------------------------
