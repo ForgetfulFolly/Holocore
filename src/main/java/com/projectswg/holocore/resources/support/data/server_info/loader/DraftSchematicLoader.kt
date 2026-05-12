@@ -50,9 +50,8 @@ class DraftSchematicLoader : DataLoader() {
 		return draftSchematics[draftSchematicIff]
 	}
 
-	/** Returns all loaded draft schematics for CRC-based lookup. */
+	/** Returns all loaded draft schematics keyed by their shared IFF path. */
 	fun getAllSchematics(): Collection<DraftSchematic> = draftSchematics.values
-
 
 	override fun load() {
 		val what = "draft schematics"
@@ -80,7 +79,7 @@ class DraftSchematicLoader : DataLoader() {
 	private fun findAllDraftSchematicJsonFiles(): List<File> {
 		val base = Paths.get("serverdata/draft_schematic")
 		val pathStream = Files.find(base, 10, { path, _ -> path.toString().endsWith(".json") })
-		
+
 		return pathStream.map { it.toFile() }.toList()
 	}
 
@@ -94,7 +93,7 @@ class DraftSchematicLoader : DataLoader() {
 
 		setItemsPerContainer(jsonObject, draftSchematic)
 		setCraftedSharedTemplate(jsonObject, draftSchematic)
-		setCombinedCrc(iffDraftSchematicPath, draftSchematic)
+		setServerAndSharedCrc(iffDraftSchematicPath, draftSchematic)
 		setVolume(jsonObject, draftSchematic)
 		setComplexity(jsonObject, draftSchematic)
 		setSlots(jsonObject, draftSchematic)
@@ -183,29 +182,22 @@ class DraftSchematicLoader : DataLoader() {
 		}
 	}
 
-	private fun setCombinedCrc(iffDraftSchematicPath: String, draftSchematic: DraftSchematic) {
-		val serverCrc = getDraftSchematicServerCrc(iffDraftSchematicPath)
-		val clientCrc = getDraftSchematicClientCrc(iffDraftSchematicPath)
-		val combinedCrc = combinedCrc(serverCrc = serverCrc, clientCrc = clientCrc)
-		draftSchematic.combinedCrc = combinedCrc
+	/**
+	 * Sets the two CRC fields on the DraftSchematic using the correct NGE formula:
+	 *   serverCrc = CRC of the full shared IFF path (e.g. "object/draft_schematic/...shared_blaster.iff")
+	 *   sharedCrc = CRC of the path with "object/draft_schematic/" prefix stripped
+	 *
+	 * These are two separate uint32 values — NOT a packed Long.
+	 * See NGE DraftSchematicObject::getCombinedCrc() which returns pair<uint32,uint32>.
+	 */
+	private fun setServerAndSharedCrc(iffDraftSchematicPath: String, draftSchematic: DraftSchematic) {
+		draftSchematic.serverCrc = CRC.getCrc(iffDraftSchematicPath)
+		draftSchematic.sharedCrc = CRC.getCrc(iffDraftSchematicPath.replace("object/draft_schematic/", ""))
 	}
 
 	private fun stringIdName(map: Map<*, *>): StringId {
 		val nameStrings = map["name"] as List<String>
 		return StringId(nameStrings[0], nameStrings[1])
-	}
-
-	private fun getDraftSchematicServerCrc(schematicInGroupShared: String): Int {
-		return CRC.getCrc(schematicInGroupShared)
-	}
-
-	private fun getDraftSchematicClientCrc(schematicInGroupShared: String): Int {
-		val templateWithoutPrefix = schematicInGroupShared.replace("object/draft_schematic/", "")
-		return CRC.getCrc(templateWithoutPrefix)
-	}
-
-	private fun combinedCrc(serverCrc: Int, clientCrc: Int): Long {
-		return serverCrc.toLong() shl 32 and -0x100000000L or (clientCrc.toLong() and 0x00000000FFFFFFFFL)
 	}
 
 	private fun resolveIngredientName(ingredientName: String): String {
@@ -216,7 +208,7 @@ class DraftSchematicLoader : DataLoader() {
 				return stringId.toString()
 			}
 		}
-		
+
 		return ingredientName
 	}
 }
