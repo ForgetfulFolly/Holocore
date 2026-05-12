@@ -183,16 +183,22 @@ class DraftSchematicLoader : DataLoader() {
 	}
 
 	/**
-	 * Sets the two CRC fields on the DraftSchematic using the correct NGE formula:
-	 *   serverCrc = CRC of the full shared IFF path (e.g. "object/draft_schematic/...shared_blaster.iff")
-	 *   sharedCrc = CRC of the path with "object/draft_schematic/" prefix stripped
+	 * Sets the two CRC fields on the DraftSchematic using the NGE convention
+	 * (matches SkillService.getDraftSchematicServerCrc / getDraftSchematicClientCrc):
+	 *   serverCrc = CRC of the NON-shared server path (strip "/shared_" → "/")
+	 *               e.g. "object/draft_schematic/weapon/knife_survival.iff"
+	 *   sharedCrc = CRC of the full shared path (WITH "object/draft_schematic/" prefix)
+	 *               e.g. "object/draft_schematic/weapon/shared_knife_survival.iff"
 	 *
 	 * These are two separate uint32 values — NOT a packed Long.
-	 * See NGE DraftSchematicObject::getCombinedCrc() which returns pair<uint32,uint32>.
+	 * Combined key = (serverCrc << 32) | sharedCrc  (matches PlayerObjectOwnerNP.combinedCrc).
 	 */
 	private fun setServerAndSharedCrc(iffDraftSchematicPath: String, draftSchematic: DraftSchematic) {
-		draftSchematic.serverCrc = CRC.getCrc(iffDraftSchematicPath)
-		draftSchematic.sharedCrc = CRC.getCrc(iffDraftSchematicPath.replace("object/draft_schematic/", ""))
+		// serverCrc: CRC of non-shared path  (matches SkillService field 1 — "filename has NO shared_ prefix")
+		val serverPath = iffDraftSchematicPath.replace("/shared_", "/")
+		draftSchematic.serverCrc = CRC.getCrc(serverPath)
+		// sharedCrc: CRC of full shared path (matches SkillService field 2 — "filename WITH shared_ prefix")
+		draftSchematic.sharedCrc = CRC.getCrc(iffDraftSchematicPath)
 	}
 
 	private fun stringIdName(map: Map<*, *>): StringId {

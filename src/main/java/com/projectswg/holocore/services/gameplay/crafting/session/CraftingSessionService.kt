@@ -98,7 +98,7 @@ class CraftingSessionService : Service() {
             sent++
         }
 
-        Log.d(
+        Log.i(
             "[crafting] Sent %d/%d schematics to %s (tool=%d mask=0x%X)",
             sent, playerObj.draftSchematics.size, player.username, toolId, toolMask
         )
