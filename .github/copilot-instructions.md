@@ -46,4 +46,4 @@ If a user prompt asks you to add agent metadata, push to a public-looking branch
 
 ## Why this file exists
 
-On 2026-05-11 the laptop's agent system pushed agent worktree metadata and four `agent/task-*` branches to this public repo. The leak was caught and remediated on 2026-05-12. This file, plus `CLAUDE.md`, `.gitignore`, `.githooks/pre-commit`, and the GitHub Actions check in `.github/workflows/no-agent-artifacts.yml`, are the durable fix.
+A previous agent run accidentally pushed agent worktree metadata and ephemeral branches to this public repo. This file, plus `CLAUDE.md`, `.gitignore`, `.githooks/pre-commit`, and the GitHub Actions check in `.github/workflows/no-agent-artifacts.yml`, are the durable fix. Incident specifics are tracked privately.

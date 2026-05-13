@@ -86,10 +86,6 @@ This makes the hook active for this repo. The hook rejects commits that include 
 
 ## Why this file exists
 
-On 2026-05-11, the laptop's agent system pushed `.worktrees/` and `CLAIMED.md`/`BLOCKED.md` files to this public repo, along with four `agent/task-*` branches. The leaked content included worker identifiers, team names, timestamps, and references to the internal `main-pollution guard` mechanism. The leak was caught during a security check on 2026-05-12.
+A previous agent run accidentally pushed working-directory metadata and ephemeral branches to this public repository. The cleanup commit and these guardrails (`.gitignore`, `.githooks/pre-commit`, `.github/workflows/no-agent-artifacts.yml`, `.github/copilot-instructions.md`, `AGENTS.md`, this file) are the durable fix.
 
-Direct security risk was low (no IPs, no credentials). Operational intelligence risk was moderate. The branches and files have been cleaned up, and these rules + the pre-commit hook + .gitignore additions are the durable fix.
-
-## Laptop-side cleanup runbook
-
-If you are reading this on the laptop that ran the agent system that caused the leak, there is a step-by-step remediation checklist at `docs/AGENT_LAPTOP_CLEANUP.md`. Run through it once — it takes ~15 minutes and finishes the laptop-side half of the fix.
+Incident details and the laptop-side remediation runbook are kept in the private parent repository, not here.
