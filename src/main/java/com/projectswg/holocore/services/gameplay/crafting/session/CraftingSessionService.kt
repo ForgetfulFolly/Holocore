@@ -80,36 +80,25 @@ class CraftingSessionService : Service() {
         playerObj.craftingLevel = if (isGenericTool) 1 else 2
 
         val schematics = playerObj.draftSchematics
-        val size = schematics.size
-        val serverCrcs = IntArray(size)
-        val clientCrcs = IntArray(size)
-        val subcategories = Array(size) { ByteArray(4) }
 
-        schematics.keys.forEachIndexed { i, combinedCrc ->
-            serverCrcs[i] = (combinedCrc ushr 32).toInt()
-            clientCrcs[i] = combinedCrc.toInt()
+        // Fix T411 Bug 3: no-schematics early-out before advancing stage.
+        if (schematics.isEmpty()) {
+            Log.d("[crafting] Player %s has no schematics for this tool type", player.username)
+            playerObj.craftingStage = CraftingStage.NONE.value
+            return
         }
 
         // Fix T411 Bug 2: use CraftingStage enum instead of magic integer.
         playerObj.craftingStage = CraftingStage.SELECT_DRAFT_SCHEMATIC.value
         playerObj.nearbyCraftStation = 0L
 
-        // Fix T411 Bug 3: no-schematics system message when no valid schematics.
-        if (size == 0) {
-            Log.d("[crafting] Player %s has no schematics for this tool type", player.username)
-            return
+        val packet = MessageQueueDraftSchematics(player.creatureObject.objectId, intent.tool.objectId, 0L)
+        for (combinedCrc in schematics.keys) {
+            val serverCrc = (combinedCrc ushr 32).toInt()
+            val clientCrc = combinedCrc.toInt()
+            packet.addSchematic(serverCrc, clientCrc, 0)
         }
-
-        player.sendPacket(
-            MessageQueueDraftSchematics(
-                intent.tool.objectId,
-                0L,
-                size,
-                serverCrcs,
-                clientCrcs,
-                subcategories
-            )
-        )
+        player.sendPacket(packet)
     }
 
     @IntentHandler
