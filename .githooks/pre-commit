@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# Block staging of agent/swarm metadata or working-directory artifacts.
+# Activate this hook with:  git config core.hooksPath .githooks
+# See CLAUDE.md / AGENTS.md for context.
+
+set -uo pipefail
+
+# Patterns that must never enter this public repo.
+PATTERNS='(^|/)\.worktrees/|(^|/)CLAIMED\.md$|(^|/)BLOCKED\.md$|(^|/)HEARTBEAT\.md$|(^|/)REVIEW\.md$|(^|/)STEER[A-Z_]*\.md$|(^|/)\.agent_meta/|(^|/)\.swarm/|(^|/)\.agent_state/'
+
+# Look at files staged for THIS commit.
+BAD=$(git diff --cached --name-only --diff-filter=AM | grep -E "$PATTERNS" || true)
+
+if [ -n "$BAD" ]; then
+  echo ""
+  echo "ERROR: refusing to commit agent / swarm metadata to a public repo."
+  echo ""
+  echo "Blocked files:"
+  echo "$BAD" | sed 's/^/  - /'
+  echo ""
+  echo "These belong on your laptop only. See CLAUDE.md for the full rules."
+  echo "Common causes:"
+  echo "  - You ran the commit from inside a .worktrees/ subdirectory"
+  echo "  - 'git add .' picked up phase-marker files the swarm wrote"
+  echo "  - Your local clone of this repo is being used as an agent workspace"
+  echo ""
+  echo "Quick fix:  git reset HEAD <file>  to unstage the bad paths,"
+  echo "            then re-run the commit."
+  echo ""
+  echo "If you genuinely need to commit one of these files (you don't),"
+  echo "  override with:  git commit --no-verify"
+  echo ""
+  exit 1
+fi
+
+# Also check staged file contents for common internal markers.
+# This is a heuristic — false positives are possible, so it's a WARN not a BLOCK.
+CONTENT_HITS=$(git diff --cached --unified=0 | grep -nE 'trader@192\.168|192\.168\.1\.60|100\.92\.[0-9]+\.[0-9]+|/landing-zone|/datalake-vm|themetagroupe@|TELEGRAM_BOT_TOKEN|ACESTEP_URL' || true)
+if [ -n "$CONTENT_HITS" ]; then
+  echo ""
+  echo "WARNING: staged content contains strings that look like internal infrastructure."
+  echo "The following lines matched the heuristic check:"
+  echo ""
+  echo "$CONTENT_HITS" | head -10 | sed 's/^/  /'
+  echo ""
+  echo "If these are intentional (e.g. game IP-address fields), proceed."
+  echo "If not, abort with Ctrl-C, unstage with 'git reset HEAD <file>', and clean."
+  echo ""
+  # Pause briefly so the human can react. Doesn't block scripted commits.
+  if [ -t 0 ]; then
+    read -t 5 -p "Press Enter to proceed, or Ctrl-C to abort... " || true
+    echo ""
+  fi
+fi
+
+exit 0

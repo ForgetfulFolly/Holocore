@@ -1,3 +1,0 @@
-prerequisite_tasks	exclusion_tasks	attach_script	journal_entry_title	journal_entry_description	tasks_on_complete	tasks_on_fail	is_visible	show_system_messages	allow_repeats	target	parameter	planet_name	location_x	location_y	location_z	radius
-
-		quest.task.ground.go_to_location	Find Wookiee benefactor	The wookiee benefactor - a shaman in charge of the hunting grounds - is nearby. Find him and talk to him.			false	false	false			kashyyyk	-516	4	393	12

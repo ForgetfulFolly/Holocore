@@ -1,5 +1,0 @@
-file	enabled
-TEXT	BOOLEAN
-bounty_imperial.sdb	true
-bounty_neutral.sdb	true
-bounty_jedi.sdb	true

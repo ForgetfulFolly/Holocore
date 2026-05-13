@@ -1,3 +1,0 @@
-prerequisite_tasks	exclusion_tasks	attach_script	journal_entry_title	journal_entry_description	tasks_on_complete	tasks_on_fail	is_visible	show_system_messages	allow_repeats	music_on_activate	target	parameter	server_object_template	count
-
-		quest.task.ground.craft	@quest/ground/test_craft:task00_journal_entry_title	@quest/ground/test_craft:task00_journal_entry_description			true	false	false	sound/music_com_enter_battle.snd			object/tangible/survey_tool/survey_tool_wind.iff	3

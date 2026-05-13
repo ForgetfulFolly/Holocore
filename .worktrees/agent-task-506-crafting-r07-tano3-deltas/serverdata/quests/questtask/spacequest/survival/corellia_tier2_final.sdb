@@ -1,5 +1,0 @@
-prerequisite_tasks	exclusion_tasks	attach_script	journal_entry_title	journal_entry_description	tasks_on_complete	tasks_on_fail	target	parameter	is_visible	show_system_messages	allow_repeats
-
-			@spacequest/survival/corellia_tier2_final:quest_location_t	@spacequest/survival/corellia_tier2_final:quest_location_d					true	false	true
-			@spacequest/survival/corellia_tier2_final:quest_reachpoint_t	@spacequest/survival/corellia_tier2_final:quest_reachpoint_d					true	false	true
-			@spacequest/survival/corellia_tier2_final:quest_defendpoint_t	@spacequest/survival/corellia_tier2_final:quest_defendpoint_d					true	false	true

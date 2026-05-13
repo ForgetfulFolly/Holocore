@@ -1,3 +1,0 @@
-prerequisite_tasks	exclusion_tasks	attach_script	journal_entry_title	journal_entry_description	tasks_on_complete	tasks_on_fail	is_visible	show_system_messages	allow_repeats	music_on_activate	target	parameter	grant_quest_on_complete	grant_quest_on_fail	target_server_template	social_group	required_region	loot_item_name	loot_items_required	loot_drop_percent	reward_credits
-
-		quest.task.ground.destroy_multi_and_loot	@quest/ground/test_destroy_multiple_and_loot_region_social_group:task00_journal_entry_title	@quest/ground/test_destroy_multiple_and_loot_region_social_group:task00_journal_entry_description			true	false	false							valarian	@tatooine_region_names:plateau	Bag of Holding	2	100	0

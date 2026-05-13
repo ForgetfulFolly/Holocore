@@ -1,3 +1,0 @@
-prerequisite_tasks	exclusion_tasks	attach_script	journal_entry_title	journal_entry_description	tasks_on_complete	tasks_on_fail	task_name	is_visible	show_system_messages	allow_repeats	music_on_activate	music_on_complete	music_on_failure	target	parameter	grant_quest_on_complete	grant_quest_on_fail	create_waypoint	planet_name	location_x	location_y	location_z	waypoint_name	perform_duration	perform_building	perform_type
-
-		quest.task.ground.perform	@quest/ground/test_perform:task00_journal_entry_title	@quest/ground/test_perform:task00_journal_entry_description			test_perform	true	true	false								false	tatooine	0.0	0.0	0.0		60	0	0

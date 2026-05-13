@@ -1,3 +1,0 @@
-prerequisite_tasks	exclusion_tasks	attach_script	journal_entry_title	journal_entry_description	tasks_on_complete	tasks_on_fail	is_visible	show_system_messages	allow_repeats	music_on_activate	target	parameter	signal_name
-
-		quest.task.ground.wait_for_signal	@quest/ground/test_wait_for_signal:task00_journal_entry_title	@quest/ground/test_wait_for_signal:task00_journal_entry_description			true	false	false				testsignal

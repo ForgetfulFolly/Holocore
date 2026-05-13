@@ -52,3 +52,20 @@ gradle.properties
 *.db
 *.iff
 mongo_data
+
+# Agent / swarm working artifacts — NEVER commit these to a public repo.
+# These are local-only metadata used by the laptop's agent workflow.
+# If you see one of these staged for commit, you have a bug. See CLAUDE.md.
+.worktrees/
+.worktrees/**
+CLAIMED.md
+BLOCKED.md
+HEARTBEAT.md
+REVIEW.md
+STEER.md
+STEER_PENDING.md
+STEER_REPLY.md
+STEER_TIMEOUT.md
+.agent_meta/
+.swarm/
+.agent_state/

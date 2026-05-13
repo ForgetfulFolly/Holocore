@@ -1,3 +1,0 @@
-prerequisite_tasks	exclusion_tasks	attach_script	journal_entry_title	journal_entry_description	tasks_on_complete	tasks_on_fail	is_visible	show_system_messages	allow_repeats	music_on_activate	target	parameter	target_server_template	loot_item_name	loot_items_required	loot_drop_percent	reward_credits
-
-		quest.task.ground.destroy_multi_and_loot	@quest/ground/test_destroy_multiple_and_loot:task00_journal_entry_title	@quest/ground/test_destroy_multiple_and_loot:task00_journal_entry_description			true	false	false				rockmite	widget	3	50	500
