@@ -1,0 +1,93 @@
+name: No agent artifacts
+
+# Server-side enforcement: blocks any push or PR that introduces agent/swarm
+# working metadata into this public repo. Complements the local pre-commit
+# hook in .githooks/pre-commit. This runs even when a commit was made via
+# the GitHub web UI, the API, GitHub Copilot Coding Agent, or any other
+# path that bypasses local hooks.
+#
+# See CLAUDE.md, AGENTS.md, .github/copilot-instructions.md for context.
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  check:
+    name: Reject agent/swarm leak patterns
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Scan tree for forbidden paths
+        id: tree-scan
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # File-path patterns that must never be tracked in this repo.
+          PATTERNS='(^|/)\.worktrees/|(^|/)CLAIMED\.md$|(^|/)BLOCKED\.md$|(^|/)HEARTBEAT\.md$|(^|/)REVIEW\.md$|(^|/)STEER[A-Z_]*\.md$|(^|/)\.agent_meta/|(^|/)\.swarm/|(^|/)\.agent_state/'
+
+          echo "Scanning tracked files at HEAD..."
+          BAD=$(git ls-tree -r --name-only HEAD | grep -E "$PATTERNS" || true)
+
+          if [ -n "$BAD" ]; then
+            echo ""
+            echo "::error::Agent/swarm metadata is present in the repo tree."
+            echo "::error::These paths must not be committed to a public repo."
+            echo ""
+            echo "Offending paths:"
+            echo "$BAD" | sed 's|^|  - |'
+            echo ""
+            echo "Remove them with: git rm <path> && git commit"
+            echo "Or, if they were just added, unstage with: git reset HEAD <path>"
+            echo ""
+            echo "Full rules: see CLAUDE.md at repo root."
+            exit 1
+          fi
+
+          echo "Tree scan clean — no agent metadata paths present."
+
+      - name: Scan diff for leak content
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+
+          if [ -z "$BASE" ] || [ -z "$HEAD" ]; then
+            echo "No base/head SHAs available, skipping diff content scan."
+            exit 0
+          fi
+
+          # Strings that strongly suggest internal infrastructure leakage.
+          # Tuned to be high-signal: real LAN IPs, internal paths, swarm identifiers.
+          DIFF=$(git diff "$BASE...$HEAD" --unified=0 -- ':!*.lock' ':!*.json' || true)
+
+          MATCHES=$(echo "$DIFF" | grep -nE 'trader@192\.168|192\.168\.1\.60|100\.92\.[0-9]+\.[0-9]+|/landing-zone|/datalake-vm|/home/trader|themetagroupe@|TELEGRAM_BOT_TOKEN|ACESTEP_URL' || true)
+
+          if [ -n "$MATCHES" ]; then
+            echo ""
+            echo "::error::Diff contains content matching internal infrastructure markers."
+            echo "::error::Lines that matched:"
+            echo "$MATCHES" | head -20 | sed 's|^|  |'
+            echo ""
+            echo "If these are intentional (e.g. game IP fields in SWG packets),"
+            echo "add a comment to the PR explaining why and ping a maintainer."
+            echo ""
+            echo "Otherwise, remove the offending lines and force-push the branch."
+            exit 1
+          fi
+
+          echo "Diff content scan clean — no internal markers detected."

@@ -1,10 +1,26 @@
 # Agent Laptop — Cleanup & Hardening Runbook
 
-**Audience:** Whoever runs the swarm/agent workflow on the laptop that has a local clone of this repo.
+**Audience:** Whoever runs the swarm/agent workflow on the laptop that has a local clone of this repo. **This laptop uses GitHub Copilot as its AI coding assistant.**
 
 **Why this exists:** On 2026-05-11 the laptop's agent system accidentally pushed local working metadata (`.worktrees/`, `CLAIMED.md`, `BLOCKED.md`) and four `agent/task-*` branches to this public GitHub repo. The remote side has been cleaned (see commit `95a8f2445` and the `CLAUDE.md` at repo root). This runbook is the laptop-side work that completes the fix.
 
 **Scope:** ~15 minutes of work, mostly mechanical. No code changes to the agent system are required to stop the leak — they're optional hardening at the end.
+
+## Why this matters for Copilot specifically
+
+GitHub Copilot can introduce changes through three paths that have different protection profiles:
+
+| Copilot path | Local pre-commit hook fires? | GitHub Actions check fires? |
+|--------------|------------------------------|------------------------------|
+| Copilot Chat / inline suggestions you accept and commit locally | ✓ Yes | ✓ Yes (on push) |
+| GitHub web UI commits via Copilot (`Code → Edit → Commit`) | ✗ No | ✓ Yes |
+| GitHub Copilot Coding Agent (autonomous PR generation) | ✗ No | ✓ Yes |
+
+The Actions check at `.github/workflows/no-agent-artifacts.yml` is **server-side** — it blocks any push or PR introducing agent metadata regardless of which Copilot path produced it. That's the durable fix.
+
+The local pre-commit hook (`.githooks/pre-commit`) is **defense in depth** for the common path (local commits) and gives you a fast failure on the laptop before pushing anything.
+
+The instructions in `.github/copilot-instructions.md` are read by GitHub Copilot Chat and the Copilot Coding Agent in modern versions, so they help at the suggestion-generation layer too.
 
 ---
 
