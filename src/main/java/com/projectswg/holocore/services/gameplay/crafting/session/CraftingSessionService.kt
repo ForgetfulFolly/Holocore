@@ -106,7 +106,7 @@ class CraftingSessionService : Service() {
         playerObj.craftingStage = CraftingStage.SELECT_DRAFT_SCHEMATIC.value
         playerObj.nearbyCraftStation = 0L
 
-        Log.d("[crafting] Sent %d/%d schematics to %s (tool=%d mask=0x%X)",
+        Log.i("[crafting] Sent %d/%d schematics to %s (tool=%d mask=0x%X)",
             sent, playerObj.draftSchematics.size, player.username, intent.tool.objectId, toolMask)
         player.sendPacket(packet)
     }

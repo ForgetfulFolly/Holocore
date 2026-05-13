@@ -310,6 +310,8 @@ class TerminalCharacterBuilderRadial : RadialHandlerInterface {
 		private fun handleMasterArtisan(player: Player) {
 			val creatureObject = player.creatureObject
 			GrantSkillIntent(GrantSkillIntent.IntentType.GRANT, "crafting_artisan_master", creatureObject, true).broadcast()
+			GrantSkillIntent(GrantSkillIntent.IntentType.GRANT, "crafting_weaponsmith_master", creatureObject, true).broadcast()
+			GrantSkillIntent(GrantSkillIntent.IntentType.GRANT, "crafting_armorsmith_master", creatureObject, true).broadcast()
 		}
 
 		private fun handleSkillsUnlockForceSensitive(player: Player) {
